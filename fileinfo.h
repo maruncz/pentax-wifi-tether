@@ -10,18 +10,22 @@ class FileInfo : public QObject
 {
     Q_OBJECT
 public:
-    explicit FileInfo(const QUrl &url, QObject *parent = nullptr);
+    explicit FileInfo(QUrl url, QObject *parent = nullptr);
 
     QUrl getFileUrl() const;
     void setFileUrl(const QUrl &value);
 
     QString getFilePath() const;
+    QString getFileDir() const;
+    QString getFileName() const;
 
     void getDate();
 
-    bool operator==(const FileInfo &rhs);
+    bool operator==(const FileInfo &rhs) const;
 
 signals:
+
+    void readyForDownload(FileInfo *fileinfo);
 
 public slots:
 
@@ -32,7 +36,7 @@ private slots:
 private:
     QUrl fileUrl;
     QString filePath;
-    QNetworkReply *infoReply;
+    QNetworkReply *infoReply{nullptr};
     QNetworkAccessManager networkManager{this};
 };
 

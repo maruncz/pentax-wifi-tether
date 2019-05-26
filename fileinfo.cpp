@@ -2,11 +2,13 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonValue>
+#include <utility>
 
-FileInfo::FileInfo(const QUrl &url, QObject *parent)
-    : QObject(parent), fileUrl(url)
+FileInfo::FileInfo(QUrl url, QObject *parent)
+    : QObject(parent), fileUrl(std::move(url))
 {
-    getDate();
+    connect(&networkManager, &QNetworkAccessManager::finished, this,
+            &FileInfo::on_networkManager_finished);
 }
 
 void FileInfo::on_networkManager_finished(QNetworkReply *reply)
@@ -17,12 +19,13 @@ void FileInfo::on_networkManager_finished(QNetworkReply *reply)
         {
             QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
             QJsonObject obj   = doc.object();
-            QString datetime  = obj.value("datetime").toString();
+            QString datetime  = obj.value(QStringLiteral("datetime")).toString();
             if (!datetime.isEmpty())
             {
                 QStringList l1 = datetime.split('T');
                 filePath =
                     l1.front() + '/' + fileUrl.toString().split('/').back();
+                emit readyForDownload(this);
             }
             else
             {
@@ -37,13 +40,23 @@ QString FileInfo::getFilePath() const
     return filePath;
 }
 
+QString FileInfo::getFileDir() const
+{
+    return filePath.split('/', QString::SkipEmptyParts).front();
+}
+
+QString FileInfo::getFileName() const
+{
+    return filePath.split('/', QString::SkipEmptyParts).back();
+}
+
 void FileInfo::getDate()
 {
     infoReply =
         networkManager.get(QNetworkRequest(QUrl(fileUrl.toString() + "/info")));
 }
 
-bool FileInfo::operator==(const FileInfo &rhs)
+bool FileInfo::operator==(const FileInfo &rhs) const
 {
     return (fileUrl == rhs.fileUrl);
 }

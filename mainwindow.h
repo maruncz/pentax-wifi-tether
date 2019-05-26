@@ -19,7 +19,7 @@ class MainWindow : public QMainWindow
 
 public:
     explicit MainWindow(QWidget *parent = nullptr);
-    ~MainWindow();
+    ~MainWindow() override;
 
 private slots:
     void on_buttonConnect_clicked();
@@ -37,6 +37,8 @@ private slots:
     void on_pushButton_clicked();
 
     void on_download_ready_read();
+    void on_download_finished();
+    void on_readyForDownload(FileInfo *fileinfo);
 
 signals:
 
@@ -55,13 +57,13 @@ private:
     QNetworkReply *listReply{nullptr};
     QNetworkReply *fileReply{nullptr};
 
-    QTimer timer{this};
-    bool run{false};
-
     QList<FileInfo *> fileList;
     QList<FileInfo *> downloadedList;
     QString savePrefix;
-    QFile *file;
+    QFile *file{nullptr};
+
+    QTimer timer{this};
+    bool run{false};
 };
 
 #endif // MAINWINDOW_H
