@@ -26,11 +26,13 @@ CONFIG += c++11
 
 SOURCES += \
         fileinfo.cpp \
+        filelistmodel.cpp \
         main.cpp \
         mainwindow.cpp
 
 HEADERS += \
         fileinfo.h \
+        filelistmodel.h \
         mainwindow.h
 
 FORMS += \

@@ -7,6 +7,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QTimer>
+#include <filelistmodel.h>
 
 namespace Ui
 {
@@ -37,7 +38,7 @@ private slots:
     void on_pushButton_clicked();
 
     void on_download_ready_read();
-    void on_download_finished();
+    void on_download_finished(FileInfo *info);
     void on_readyForDownload(FileInfo *fileinfo);
 
 signals:
@@ -57,8 +58,8 @@ private:
     QNetworkReply *listReply{nullptr};
     QNetworkReply *fileReply{nullptr};
 
+    FileListModel *listModel{nullptr};
     QList<FileInfo *> fileList;
-    QList<FileInfo *> downloadedList;
     QString savePrefix;
     QFile *file{nullptr};
 

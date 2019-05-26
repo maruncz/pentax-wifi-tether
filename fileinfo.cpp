@@ -35,6 +35,16 @@ void FileInfo::on_networkManager_finished(QNetworkReply *reply)
     }
 }
 
+bool FileInfo::getDownloaded() const
+{
+    return downloaded;
+}
+
+void FileInfo::setDownloaded(bool value)
+{
+    downloaded = value;
+}
+
 QString FileInfo::getFilePath() const
 {
     return filePath;
@@ -59,6 +69,11 @@ void FileInfo::getDate()
 bool FileInfo::operator==(const FileInfo &rhs) const
 {
     return (fileUrl == rhs.fileUrl);
+}
+
+bool FileInfo::operator<(const FileInfo &rhs) const
+{
+    return (fileUrl < rhs.fileUrl);
 }
 
 QUrl FileInfo::getFileUrl() const

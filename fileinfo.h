@@ -22,6 +22,10 @@ public:
     void getDate();
 
     bool operator==(const FileInfo &rhs) const;
+    bool operator<(const FileInfo &rhs) const;
+
+    bool getDownloaded() const;
+    void setDownloaded(bool value);
 
 signals:
 
@@ -38,6 +42,7 @@ private:
     QString filePath;
     QNetworkReply *infoReply{nullptr};
     QNetworkAccessManager networkManager{this};
+    bool downloaded{false};
 };
 
 #endif // FILEINFO_H

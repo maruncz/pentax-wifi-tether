@@ -24,6 +24,9 @@ MainWindow::MainWindow(QWidget *parent)
     timer.setSingleShot(true);
     connect(this, &MainWindow::filesChanged, this,
             &MainWindow::on_files_changed);
+    listModel = new FileListModel(this);
+    listModel->setFileList(&fileList);
+    ui->listView->setModel(listModel);
 }
 
 MainWindow::~MainWindow()
@@ -106,7 +109,7 @@ void MainWindow::on_networkManager_finished(QNetworkReply *reply)
 
 void MainWindow::on_buttonStart_clicked()
 {
-    timer.start(1000);
+    timer.start(1);
     run = true;
     ui->buttonStop->setEnabled(true);
     ui->buttonStart->setEnabled(false);
@@ -129,13 +132,14 @@ void MainWindow::on_files_changed()
 {
     Q_FOREACH (const auto f, fileList)
     {
-        if (downloadedList.contains(f))
+        if (f->getDownloaded())
         {
             continue;
         }
         if (alreadyDownloaded(f))
         {
-            downloadedList.append(f);
+            f->setDownloaded(true);
+            listModel->update(f);
             continue;
         }
         if (!fileReply)
@@ -157,8 +161,10 @@ void MainWindow::on_files_changed()
                 break;
             }
             fileReply = networkManager.get(QNetworkRequest(f->getFileUrl()));
-            connect(fileReply, &QNetworkReply::finished, this,
-                    &MainWindow::on_download_finished);
+            //            connect(fileReply, &QNetworkReply::finished, this,
+            //                    &MainWindow::on_download_finished);
+            connect(fileReply, &QNetworkReply::finished,
+                    [f, this]() { this->on_download_finished(f); });
             connect(fileReply, &QNetworkReply::readyRead, this,
                     &MainWindow::on_download_ready_read);
             break;
@@ -205,21 +211,24 @@ void MainWindow::on_download_ready_read()
     file->write(fileReply->readAll());
 }
 
-void MainWindow::on_download_finished()
+void MainWindow::on_download_finished(FileInfo *info)
 {
-    qDebug() << file->fileName() << " downloaded";
+    qDebug() << info->getFilePath() << " downloaded";
+    info->setDownloaded(true);
+    listModel->update(info);
     file->close();
     delete file;
     file      = nullptr;
     fileReply = nullptr;
     if (run)
     {
-        timer.start(1000);
+        timer.start(1);
     }
 }
 
 void MainWindow::on_readyForDownload(FileInfo *fileinfo)
 {
     fileList.append(fileinfo);
+    listModel->update(fileinfo);
     emit filesChanged();
 }
