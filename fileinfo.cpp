@@ -19,7 +19,7 @@ void FileInfo::on_networkManager_finished(QNetworkReply *reply)
         {
             QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
             QJsonObject obj   = doc.object();
-            QString datetime  = obj.value(QStringLiteral("datetime")).toString();
+            QString datetime = obj.value(QStringLiteral("datetime")).toString();
             if (!datetime.isEmpty())
             {
                 QStringList l1 = datetime.split('T');
@@ -33,16 +33,6 @@ void FileInfo::on_networkManager_finished(QNetworkReply *reply)
             }
         }
     }
-}
-
-bool FileInfo::getDownloaded() const
-{
-    return downloaded;
-}
-
-void FileInfo::setDownloaded(bool value)
-{
-    downloaded = value;
 }
 
 QString FileInfo::getFilePath() const
@@ -74,6 +64,34 @@ bool FileInfo::operator==(const FileInfo &rhs) const
 bool FileInfo::operator<(const FileInfo &rhs) const
 {
     return (fileUrl < rhs.fileUrl);
+}
+
+bool FileInfo::alreadyDownloaded(const QString &savePrefix)
+{
+    if (downloaded)
+    {
+        return true;
+    }
+    QString dir       = getFileDir();
+    QString file      = getFileName();
+    auto split        = file.split('.');
+    QString filename  = split.front();
+    QString extension = split.back();
+    for (int i = 0; i < 2; ++i)
+    {
+        for (int j = 0; j < 2; ++j)
+        {
+            QString tmp = dir + '/' +
+                          (j ? filename.toLower() : filename.toUpper()) + '.' +
+                          (i ? extension.toLower() : extension.toUpper());
+            if (QFile::exists(savePrefix + '/' + tmp))
+            {
+                downloaded = true;
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 QUrl FileInfo::getFileUrl() const

@@ -2,24 +2,60 @@
 #define FILELISTMODEL_H
 
 #include "fileinfo.h"
-#include <QAbstractListModel>
+#include <QAbstractTableModel>
+#include <QFile>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
 #include <QObject>
+#include <QTimer>
 
-class FileListModel : public QAbstractListModel
+class FileListModel : public QAbstractTableModel
 {
     Q_OBJECT
 public:
     explicit FileListModel(QObject *parent = nullptr);
     QVariant data(const QModelIndex &index,
                   int role = Qt::DisplayRole) const override;
+    QVariant headerData(int /*section*/, Qt::Orientation orientation,
+                        int role = Qt::DisplayRole) const override;
     int rowCount(const QModelIndex &parent) const override;
+    int columnCount(const QModelIndex &parent) const override;
 
-    void setFileList(QList<FileInfo *> *value);
+    void append(FileInfo *value);
 
-    void update(FileInfo *const info);
+    bool urlExists(FileInfo *info) const;
+
+    QString getSavePrefix() const;
+    void setSavePrefix(const QString &value);
+
+    bool getRun() const;
+    void setRun(bool value);
+
+signals:
+
+    void filesChanged();
 
 private:
-    QList<FileInfo *> *fileList{nullptr};
+    void on_networkManager_finished(QNetworkReply *reply);
+    void on_files_changed();
+    void on_readyForDownload(FileInfo *fileinfo);
+    void on_download_finished(FileInfo *fileinfo);
+    void on_download_ready_read();
+    void on_timer_timeout();
+    void update(FileInfo *fileinfo, const QVector<int> &roles = QVector<int>());
+    void start(int msec = 1000);
+    void setDownloaded(FileInfo *info, bool value);
+
+    QNetworkAccessManager networkManager{this};
+    QNetworkReply *listReply{nullptr};
+    QNetworkReply *fileReply{nullptr};
+
+    QString savePrefix;
+    QFile *file{nullptr};
+
+    QList<FileInfo *> fileList;
+    QTimer timer{this};
+    bool run{false};
 };
 
 #endif // FILELISTMODEL_H
