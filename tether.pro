@@ -25,14 +25,18 @@ DEFINES += QT_DEPRECATED_WARNINGS
 CONFIG += c++11
 
 SOURCES += \
+        downloadqueue.cpp \
         fileinfo.cpp \
         filelistmodel.cpp \
+        datequeue.cpp \
         main.cpp \
         mainwindow.cpp
 
 HEADERS += \
+        downloadqueue.h \
         fileinfo.h \
         filelistmodel.h \
+        datequeue.h \
         mainwindow.h
 
 FORMS += \

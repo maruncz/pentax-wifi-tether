@@ -11,10 +11,13 @@ FileListModel::FileListModel(QObject *parent) : QAbstractTableModel(parent)
 {
     connect(&networkManager, &QNetworkAccessManager::finished, this,
             &FileListModel::on_networkManager_finished);
-    connect(this, &FileListModel::filesChanged, this,
-            &FileListModel::on_files_changed);
     connect(&timer, &QTimer::timeout, this, &FileListModel::on_timer_timeout);
-    timer.setSingleShot(true);
+    timer.setSingleShot(false);
+    connect(&pendingList, &DateQueue::ready, &downloadList,
+            &DownloadQueue::enqueue);
+    connect(&pendingList, &DateQueue::ready, this, &FileListModel::append);
+    connect(&downloadList, &DownloadQueue::downloaded, this,
+            [this](FileInfo *info) { this->setDownloaded(info, true); });
 }
 
 QVariant FileListModel::data(const QModelIndex &index, int role) const
@@ -80,7 +83,11 @@ bool FileListModel::urlExists(FileInfo *const info) const
 {
     auto it = std::find_if(fileList.begin(), fileList.end(),
                            [&info](const FileInfo *p) { return *p == *info; });
-    return it != fileList.end();
+    if (it != fileList.end())
+    {
+        return true;
+    }
+    return pendingList.urlExists(info);
 }
 
 void FileListModel::setDownloaded(FileInfo *info, bool value)
@@ -97,7 +104,6 @@ void FileListModel::on_networkManager_finished(QNetworkReply *reply)
     {
         if (reply->error() == QNetworkReply::NoError)
         {
-            bool changed      = false;
             QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
             QJsonObject obj   = doc.object();
             QJsonArray dirs   = obj.value(QStringLiteral("dirs")).toArray();
@@ -115,11 +121,8 @@ void FileListModel::on_networkManager_finished(QNetworkReply *reply)
 
                     if (!urlExists(file))
                     {
-                        qDebug() << url;
-                        connect(file, &FileInfo::readyForDownload, this,
-                                &FileListModel::on_readyForDownload);
-                        file->getDate();
-                        changed = true;
+                        qDebug() << "new: " << url;
+                        pendingList.enqueue(file);
                     }
                     else
                     {
@@ -127,94 +130,14 @@ void FileListModel::on_networkManager_finished(QNetworkReply *reply)
                     }
                 }
             }
-            if (!changed)
-            {
-                start();
-            }
-        }
-        else
-        {
-            start();
         }
     }
-}
-
-void FileListModel::on_files_changed()
-{
-    Q_FOREACH (const auto f, fileList)
-    {
-        if (f->alreadyDownloaded(savePrefix))
-        {
-            continue;
-        }
-        if (!fileReply)
-        {
-            QDir dir(savePrefix + '/' + f->getFileDir());
-            if (!dir.exists())
-            {
-                if (!dir.mkpath(dir.path()))
-                {
-                    qDebug() << "cannot create directory: " << dir.path();
-                }
-            }
-
-            file = new QFile(savePrefix + '/' + f->getFilePath());
-            if (!file->open(QIODevice::WriteOnly))
-            {
-                qDebug() << "cannot open file " << file->fileName() << ": "
-                         << file->errorString();
-                break;
-            }
-            fileReply = networkManager.get(QNetworkRequest(f->getFileUrl()));
-            //            connect(fileReply, &QNetworkReply::finished, this,
-            //                    &MainWindow::on_download_finished);
-            connect(fileReply, &QNetworkReply::finished, this,
-                    [f, this]() { this->on_download_finished(f); });
-            connect(fileReply, &QNetworkReply::readyRead, this,
-                    &FileListModel::on_download_ready_read);
-            break;
-        }
-        break;
-    }
-    start();
-}
-
-void FileListModel::on_readyForDownload(FileInfo *fileinfo)
-{
-    append(fileinfo);
-    update(fileinfo, QVector<int>(Qt::DisplayRole));
-    emit filesChanged();
-}
-
-void FileListModel::on_download_finished(FileInfo *fileinfo)
-{
-    qDebug() << fileinfo->getFilePath() << " downloaded";
-    fileinfo->downloaded = true;
-    update(fileinfo, QVector<int>(Qt::BackgroundRole));
-    file->close();
-    delete file;
-    file      = nullptr;
-    fileReply = nullptr;
-    emit filesChanged();
-}
-
-void FileListModel::on_download_ready_read()
-{
-    file->write(fileReply->readAll());
 }
 
 void FileListModel::on_timer_timeout()
 {
     listReply = networkManager.get(
         QNetworkRequest(QUrl(QStringLiteral("http://192.168.0.1/v1/photos"))));
-}
-
-void FileListModel::start(int msec)
-{
-    if (run && (!fileReply) && (!timer.isActive()))
-    {
-        timer.start(msec);
-    }
 }
 
 void FileListModel::update(FileInfo *const fileinfo, const QVector<int> &roles)
@@ -226,13 +149,19 @@ void FileListModel::update(FileInfo *const fileinfo, const QVector<int> &roles)
 
 bool FileListModel::getRun() const
 {
-    return run;
+    return timer.isActive();
 }
 
 void FileListModel::setRun(bool value)
 {
-    run = value;
-    start(1);
+    if (value)
+    {
+        timer.start(1000);
+    }
+    else
+    {
+        timer.stop();
+    }
 }
 
 QString FileListModel::getSavePrefix() const
@@ -243,4 +172,5 @@ QString FileListModel::getSavePrefix() const
 void FileListModel::setSavePrefix(const QString &value)
 {
     savePrefix = value;
+    downloadList.setSavePrefix(value);
 }

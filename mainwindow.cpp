@@ -21,7 +21,12 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&networkManager, &QNetworkAccessManager::finished, this,
             &MainWindow::on_networkManager_finished);
     listModel = new FileListModel(this);
-    ui->tableView->setModel(listModel);
+    sortModel = new QSortFilterProxyModel(this);
+    sortModel->setSourceModel(listModel);
+    connect(listModel, &FileListModel::rowsInserted, sortModel,
+            [this](const QModelIndex & /*parent*/, int /*first*/,
+                   int /*last*/) { sortModel->sort(0); });
+    ui->tableView->setModel(sortModel);
     ui->tableView->horizontalHeader()->setSectionResizeMode(
         QHeaderView::Stretch);
 }

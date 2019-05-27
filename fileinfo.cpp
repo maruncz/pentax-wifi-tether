@@ -1,4 +1,5 @@
 #include "fileinfo.h"
+#include <QDir>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonValue>
@@ -32,7 +33,33 @@ void FileInfo::on_networkManager_finished(QNetworkReply *reply)
                 qDebug() << reply->readAll();
             }
         }
+        else
+        {
+            qDebug() << "date reply error: " << reply->error();
+        }
     }
+    else if (reply == downloadReply)
+    {
+        if (reply->error() != QNetworkReply::NoError)
+        {
+            qDebug() << "download error: " << reply->errorString();
+        }
+    }
+}
+
+void FileInfo::on_download_ready_read()
+{
+    file->write(downloadReply->readAll());
+}
+
+void FileInfo::on_download_finished()
+{
+    downloaded = true;
+    file->close();
+    delete file;
+    file          = nullptr;
+    downloadReply = nullptr;
+    emit fileDownloaded(this);
 }
 
 QString FileInfo::getFilePath() const
@@ -54,6 +81,37 @@ void FileInfo::getDate()
 {
     infoReply =
         networkManager.get(QNetworkRequest(QUrl(fileUrl.toString() + "/info")));
+}
+
+void FileInfo::download(const QString &savePrefix)
+{
+    if (alreadyDownloaded(savePrefix))
+    {
+        emit fileDownloaded(this);
+        return;
+    }
+    QDir dir(savePrefix + '/' + getFileDir());
+    if (!dir.exists())
+    {
+        if (!dir.mkpath(dir.path()))
+        {
+            qDebug() << "cannot create directory: " << dir.path();
+        }
+    }
+
+    file = new QFile(savePrefix + '/' + getFilePath());
+    if (!file->open(QIODevice::WriteOnly))
+    {
+        qDebug() << "cannot open file " << file->fileName() << ": "
+                 << file->errorString();
+        return;
+    }
+    downloadReply = networkManager.get(QNetworkRequest(getFileUrl()));
+
+    connect(downloadReply, &QNetworkReply::finished, this,
+            &FileInfo::on_download_finished);
+    connect(downloadReply, &QNetworkReply::readyRead, this,
+            &FileInfo::on_download_ready_read);
 }
 
 bool FileInfo::operator==(const FileInfo &rhs) const

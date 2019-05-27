@@ -7,6 +7,7 @@
 #include <QMainWindow>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
+#include <QSortFilterProxyModel>
 #include <QTimer>
 
 namespace Ui
@@ -41,6 +42,7 @@ private:
     QNetworkAccessManager networkManager{this};
     QNetworkReply *connectReply{nullptr};
     FileListModel *listModel{nullptr};
+    QSortFilterProxyModel *sortModel{nullptr};
     QString savePrefix;
 };
 

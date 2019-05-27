@@ -1,6 +1,8 @@
 #ifndef FILELISTMODEL_H
 #define FILELISTMODEL_H
 
+#include "datequeue.h"
+#include "downloadqueue.h"
 #include "fileinfo.h"
 #include <QAbstractTableModel>
 #include <QFile>
@@ -33,29 +35,21 @@ public:
 
 signals:
 
-    void filesChanged();
-
 private:
     void on_networkManager_finished(QNetworkReply *reply);
-    void on_files_changed();
-    void on_readyForDownload(FileInfo *fileinfo);
-    void on_download_finished(FileInfo *fileinfo);
-    void on_download_ready_read();
     void on_timer_timeout();
     void update(FileInfo *fileinfo, const QVector<int> &roles = QVector<int>());
-    void start(int msec = 1000);
     void setDownloaded(FileInfo *info, bool value);
 
     QNetworkAccessManager networkManager{this};
     QNetworkReply *listReply{nullptr};
-    QNetworkReply *fileReply{nullptr};
 
     QString savePrefix;
-    QFile *file{nullptr};
 
+    DateQueue pendingList;
+    DownloadQueue downloadList;
     QList<FileInfo *> fileList;
     QTimer timer{this};
-    bool run{false};
 };
 
 #endif // FILELISTMODEL_H

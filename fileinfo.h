@@ -24,6 +24,8 @@ public:
     QString getFileName() const;
 
     void getDate();
+    void download(const QString &savePrefix);
+    bool alreadyDownloaded(const QString &savePrefix);
 
     bool operator==(const FileInfo &rhs) const;
     bool operator<(const FileInfo &rhs) const;
@@ -31,19 +33,23 @@ public:
 signals:
 
     void readyForDownload(FileInfo *fileinfo);
+    void fileDownloaded(FileInfo *fileinfo);
 
 public slots:
 
 private slots:
 
     void on_networkManager_finished(QNetworkReply *reply);
+    void on_download_ready_read();
+    void on_download_finished();
 
 private:
-    bool alreadyDownloaded(const QString &savePrefix);
     QUrl fileUrl;
     QString filePath;
     QNetworkReply *infoReply{nullptr};
+    QNetworkReply *downloadReply{nullptr};
     QNetworkAccessManager networkManager{this};
+    QFile *file{nullptr};
     bool downloaded{false};
 };
 
