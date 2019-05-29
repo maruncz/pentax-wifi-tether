@@ -29,6 +29,7 @@ private slots:
     void fetch();
 
     void on_fetched(FileInfo *fileinfo);
+    void on_fetch_error(FileInfo *fileinfo);
 
 private:
     QQueue<FileInfo *> queue;

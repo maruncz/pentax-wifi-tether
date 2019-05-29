@@ -34,6 +34,8 @@ signals:
 
     void readyForDownload(FileInfo *fileinfo);
     void fileDownloaded(FileInfo *fileinfo);
+    void dateFetchError(FileInfo *fileinfo);
+    void downloadError(FileInfo *fileinfo);
 
 public slots:
 

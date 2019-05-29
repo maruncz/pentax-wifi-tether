@@ -15,6 +15,8 @@ void DateQueue::enqueue(FileInfo *fileinfo)
     queue.enqueue(fileinfo);
     connect(fileinfo, &FileInfo::readyForDownload, this,
             &DateQueue::on_fetched);
+    connect(fileinfo, &FileInfo::dateFetchError, this,
+            &DateQueue::on_fetch_error);
     emit enqueued(fileinfo);
 }
 
@@ -41,5 +43,11 @@ void DateQueue::on_fetched(FileInfo *fileinfo)
     auto idx = queue.indexOf(fileinfo);
     queue.removeAt(idx);
     emit ready(fileinfo);
+    fetching = 0;
+}
+
+void DateQueue::on_fetch_error(FileInfo *fileinfo)
+{
+    qDebug() << "error fetching date: " << fileinfo->getFileUrl();
     fetching = 0;
 }

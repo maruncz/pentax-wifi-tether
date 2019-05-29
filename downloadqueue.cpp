@@ -14,6 +14,8 @@ void DownloadQueue::enqueue(FileInfo *fileinfo)
     queue.enqueue(fileinfo);
     connect(fileinfo, &FileInfo::fileDownloaded, this,
             &DownloadQueue::on_downloaded);
+    connect(fileinfo, &FileInfo::downloadError, this,
+            &DownloadQueue::on_download_error);
 }
 
 void DownloadQueue::fetch()
@@ -23,7 +25,7 @@ void DownloadQueue::fetch()
         return;
     }
     fetching = 1;
-    if(queue.head()->alreadyDownloaded(savePrefix))
+    if (queue.head()->alreadyDownloaded(savePrefix))
     {
         on_downloaded(queue.head());
         return;
@@ -37,6 +39,12 @@ void DownloadQueue::on_downloaded(FileInfo *fileinfo)
     auto idx = queue.indexOf(fileinfo);
     queue.removeAt(idx);
     emit downloaded(fileinfo);
+    fetching = 0;
+}
+
+void DownloadQueue::on_download_error(FileInfo *fileinfo)
+{
+    qDebug() << "download error: " << fileinfo->getFileUrl();
     fetching = 0;
 }
 

@@ -28,6 +28,7 @@ public slots:
     void fetch();
 
     void on_downloaded(FileInfo *fileinfo);
+    void on_download_error(FileInfo *fileinfo);
 
 private:
     QQueue<FileInfo *> queue;

@@ -36,6 +36,7 @@ void FileInfo::on_networkManager_finished(QNetworkReply *reply)
         else
         {
             qDebug() << "date reply error: " << reply->error();
+            emit dateFetchError(this);
         }
     }
     else if (reply == downloadReply)
@@ -43,6 +44,7 @@ void FileInfo::on_networkManager_finished(QNetworkReply *reply)
         if (reply->error() != QNetworkReply::NoError)
         {
             qDebug() << "download error: " << reply->errorString();
+            emit downloadError(this);
         }
     }
 }
