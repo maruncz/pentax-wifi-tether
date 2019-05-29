@@ -91,7 +91,7 @@ void FileInfo::on_timeout()
     }
 }
 
-void FileInfo::on_download_progress(qint64 bytesReceived, qint64 bytesTotal)
+void FileInfo::on_download_progress(qint64  /*bytesReceived*/, qint64  /*bytesTotal*/)
 {
     timeout.start(15000);
 }
@@ -134,7 +134,7 @@ void FileInfo::download(const QString &savePrefix)
         }
     }
 
-    file = new QFile(savePrefix + '/' + getFilePath());
+    file = new QFile(savePrefix + '/' + getFilePath(), this);
     if (!file->open(QIODevice::WriteOnly))
     {
         qDebug() << "cannot open file " << file->fileName() << ": "
