@@ -33,6 +33,8 @@ MainWindow::MainWindow(QWidget *parent)
         QHeaderView::ResizeToContents);
     connect(listModel, &FileListModel::downloadProgress, this,
             &MainWindow::on_download_progress);
+    connect(listModel, &FileListModel::globalDownloadProgress, this,
+            &MainWindow::on_global_download_progress);
 }
 
 MainWindow::~MainWindow()
@@ -101,4 +103,13 @@ void MainWindow::on_download_progress(const QString &name, int percent,
     ui->progressDownload->setValue(percent);
     ui->progressDownload->setFormat(name + ": %p% (" + QString::number(rate) +
                                     "kB/s)");
+}
+
+void MainWindow::on_global_download_progress(int downloadedFiles,
+                                             int totalFiles)
+{
+    ui->progressGlobal->setMaximum(totalFiles);
+    ui->progressGlobal->setValue(downloadedFiles);
+    ui->progressGlobal->setFormat("Files: " + QString::number(downloadedFiles) +
+                                  '/' + QString::number(totalFiles) + " %p%");
 }

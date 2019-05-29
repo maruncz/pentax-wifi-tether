@@ -36,16 +36,18 @@ public:
 signals:
 
     void downloadProgress(const QString &name, int percent, double rate);
+    void globalDownloadProgress(int downloadedFiles, int totalFiles);
 
 private slots:
 
     void on_download_progress(const QString &name, int percent, double rate);
+    void on_file_downloaded(FileInfo *fileinfo);
 
 private:
     void on_networkManager_finished(QNetworkReply *reply);
     void on_timer_timeout();
     void update(FileInfo *fileinfo, const QVector<int> &roles = QVector<int>());
-    void setDownloaded(FileInfo *info, bool value);
+    void setDownloaded(FileInfo *info);
 
     QNetworkAccessManager networkManager{this};
     QNetworkReply *listReply{nullptr};

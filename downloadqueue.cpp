@@ -25,7 +25,7 @@ void DownloadQueue::fetch()
         return;
     }
     fetching = 1;
-    if (queue.head()->alreadyDownloaded(savePrefix))
+    if (queue.head()->isDownloaded())
     {
         on_downloaded(queue.head());
         return;

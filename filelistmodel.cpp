@@ -17,9 +17,11 @@ FileListModel::FileListModel(QObject *parent) : QAbstractTableModel(parent)
             &DownloadQueue::enqueue);
     connect(&pendingList, &DateQueue::ready, this, &FileListModel::append);
     connect(&downloadList, &DownloadQueue::downloaded, this,
-            [this](FileInfo *info) { this->setDownloaded(info, true); });
+            &FileListModel::setDownloaded);
     connect(&downloadList, &DownloadQueue::downloadProgress, this,
             &FileListModel::on_download_progress);
+    connect(&downloadList, &DownloadQueue::downloaded, this,
+            &FileListModel::on_file_downloaded);
 }
 
 QVariant FileListModel::data(const QModelIndex &index, int role) const
@@ -33,7 +35,7 @@ QVariant FileListModel::data(const QModelIndex &index, int role) const
         case Qt::DisplayRole: return fileList.at(index.row())->getFilePath();
 
         case Qt::BackgroundRole:
-            if (fileList.at(index.row())->downloaded)
+            if (fileList.at(index.row())->isDownloaded())
             {
                 return QBrush(Qt::green);
             }
@@ -79,6 +81,7 @@ void FileListModel::append(FileInfo *value)
     beginInsertRows(QModelIndex(), fileList.size(), fileList.size());
     fileList.append(value);
     endInsertRows();
+    on_file_downloaded(nullptr);
 }
 
 bool FileListModel::urlExists(FileInfo *const info) const
@@ -92,11 +95,10 @@ bool FileListModel::urlExists(FileInfo *const info) const
     return pendingList.urlExists(info);
 }
 
-void FileListModel::setDownloaded(FileInfo *info, bool value)
+void FileListModel::setDownloaded(FileInfo *info)
 {
-    info->downloaded = value;
-    auto idx         = fileList.indexOf(info);
-    auto midx        = index(idx, 0);
+    auto idx  = fileList.indexOf(info);
+    auto midx = index(idx, 0);
     emit dataChanged(midx, midx, QVector<int>(Qt::DisplayRole));
 }
 
@@ -170,6 +172,19 @@ void FileListModel::on_download_progress(const QString &name, int percent,
                                          double rate)
 {
     emit downloadProgress(name, percent, rate);
+}
+
+void FileListModel::on_file_downloaded(FileInfo * /*fileinfo*/)
+{
+    int numDownloaded = 0;
+    Q_FOREACH (auto file, fileList)
+    {
+        if (file->isDownloaded())
+        {
+            ++numDownloaded;
+        }
+    }
+    emit globalDownloadProgress(numDownloaded, fileList.size());
 }
 
 QString FileListModel::getSavePrefix() const

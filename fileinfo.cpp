@@ -1,4 +1,4 @@
-#include "fileinfo.h"
+﻿#include "fileinfo.h"
 #include <QDir>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -206,6 +206,11 @@ bool FileInfo::alreadyDownloaded(const QString &savePrefix)
         }
     }
     return false;
+}
+
+bool FileInfo::isDownloaded() const
+{
+    return downloaded;
 }
 
 QUrl FileInfo::getFileUrl() const

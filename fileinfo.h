@@ -11,9 +11,6 @@
 class FileInfo : public QObject
 {
     Q_OBJECT
-
-    friend class FileListModel;
-
 public:
     explicit FileInfo(QUrl url, QObject *parent = nullptr);
 
@@ -26,10 +23,11 @@ public:
 
     void getDate();
     void download(const QString &savePrefix);
-    bool alreadyDownloaded(const QString &savePrefix);
 
     bool operator==(const FileInfo &rhs) const;
     bool operator<(const FileInfo &rhs) const;
+
+    bool isDownloaded() const;
 
 signals:
 
@@ -52,6 +50,8 @@ private slots:
     void on_rateTimer_timeout();
 
 private:
+    bool alreadyDownloaded(const QString &savePrefix);
+
     QUrl fileUrl;
     QString filePath;
     QNetworkReply *infoReply{nullptr};
