@@ -30,13 +30,18 @@ void DownloadQueue::fetch()
         on_downloaded(queue.head());
         return;
     }
-    queue.head()->download(savePrefix);
+    auto file = queue.head();
+    connect(file, &FileInfo::downloadProgress, this,
+            &DownloadQueue::on_download_progress);
+    file->download(savePrefix);
 }
 
 void DownloadQueue::on_downloaded(FileInfo *fileinfo)
 {
     qDebug() << "downloaded: " << fileinfo->getFileUrl();
-    auto idx = queue.indexOf(fileinfo);
+    auto idx  = queue.indexOf(fileinfo);
+    auto file = queue.at(idx);
+    file->disconnect(this);
     queue.removeAt(idx);
     emit downloaded(fileinfo);
     fetching = 0;
@@ -46,6 +51,12 @@ void DownloadQueue::on_download_error(FileInfo *fileinfo)
 {
     qDebug() << "download error: " << fileinfo->getFileUrl();
     fetching = 0;
+}
+
+void DownloadQueue::on_download_progress(const QString &name, int percent,
+                                         double rate)
+{
+    emit downloadProgress(name, percent, rate);
 }
 
 void DownloadQueue::setSavePrefix(const QString &value)

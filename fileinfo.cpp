@@ -3,6 +3,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonValue>
+#include <cmath>
 #include <utility>
 
 FileInfo::FileInfo(QUrl url, QObject *parent)
@@ -12,6 +13,10 @@ FileInfo::FileInfo(QUrl url, QObject *parent)
             &FileInfo::on_networkManager_finished);
     timeout.setSingleShot(true);
     connect(&timeout, &QTimer::timeout, this, &FileInfo::on_timeout);
+    rateTimer.setSingleShot(false);
+    rateTimer.setInterval(1000);
+    connect(&rateTimer, &QTimer::timeout, this,
+            &FileInfo::on_rateTimer_timeout);
 }
 
 void FileInfo::on_networkManager_finished(QNetworkReply *reply)
@@ -65,6 +70,7 @@ void FileInfo::on_networkManager_finished(QNetworkReply *reply)
         file->deleteLater();
         file = nullptr;
         timeout.stop();
+        rateTimer.stop();
     }
 }
 
@@ -91,9 +97,21 @@ void FileInfo::on_timeout()
     }
 }
 
-void FileInfo::on_download_progress(qint64  /*bytesReceived*/, qint64  /*bytesTotal*/)
+void FileInfo::on_download_progress(qint64 bytesReceived, qint64 bytesTotal)
 {
     timeout.start(15000);
+    double pecrd =
+        static_cast<double>(bytesReceived) / static_cast<double>(bytesTotal);
+    int percent  = static_cast<int>(std::round(100 * pecrd));
+    bytesWritten = bytesReceived;
+    emit downloadProgress(getFileName(), percent, downloadRate);
+}
+
+void FileInfo::on_rateTimer_timeout()
+{
+    downloadRate =
+        static_cast<double>(bytesWritten - bytesWrittenPrevious) / 1000.0;
+    bytesWrittenPrevious = bytesWritten;
 }
 
 QString FileInfo::getFilePath() const
@@ -149,6 +167,7 @@ void FileInfo::download(const QString &savePrefix)
             &FileInfo::on_download_progress);
 
     timeout.start(15000);
+    rateTimer.start();
 }
 
 bool FileInfo::operator==(const FileInfo &rhs) const

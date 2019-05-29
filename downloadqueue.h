@@ -22,6 +22,7 @@ public:
 signals:
 
     void downloaded(FileInfo *fileinfo);
+    void downloadProgress(const QString &name, int percent, double rate);
 
 public slots:
 
@@ -29,6 +30,7 @@ public slots:
 
     void on_downloaded(FileInfo *fileinfo);
     void on_download_error(FileInfo *fileinfo);
+    void on_download_progress(const QString &name, int percent, double rate);
 
 private:
     QQueue<FileInfo *> queue;

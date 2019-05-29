@@ -36,6 +36,8 @@ private slots:
 
     void on_lineEdit_editingFinished();
 
+    void on_download_progress(const QString &name, int percent, double rate);
+
 private:
     Ui::MainWindow *ui;
 

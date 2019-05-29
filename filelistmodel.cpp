@@ -18,6 +18,8 @@ FileListModel::FileListModel(QObject *parent) : QAbstractTableModel(parent)
     connect(&pendingList, &DateQueue::ready, this, &FileListModel::append);
     connect(&downloadList, &DownloadQueue::downloaded, this,
             [this](FileInfo *info) { this->setDownloaded(info, true); });
+    connect(&downloadList, &DownloadQueue::downloadProgress, this,
+            &FileListModel::on_download_progress);
 }
 
 QVariant FileListModel::data(const QModelIndex &index, int role) const
@@ -162,6 +164,12 @@ void FileListModel::setRun(bool value)
     {
         timer.stop();
     }
+}
+
+void FileListModel::on_download_progress(const QString &name, int percent,
+                                         double rate)
+{
+    emit downloadProgress(name, percent, rate);
 }
 
 QString FileListModel::getSavePrefix() const

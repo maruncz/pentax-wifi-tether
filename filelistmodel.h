@@ -35,6 +35,12 @@ public:
 
 signals:
 
+    void downloadProgress(const QString &name, int percent, double rate);
+
+private slots:
+
+    void on_download_progress(const QString &name, int percent, double rate);
+
 private:
     void on_networkManager_finished(QNetworkReply *reply);
     void on_timer_timeout();

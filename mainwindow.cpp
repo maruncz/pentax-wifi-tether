@@ -29,6 +29,10 @@ MainWindow::MainWindow(QWidget *parent)
     ui->tableView->setModel(sortModel);
     ui->tableView->horizontalHeader()->setSectionResizeMode(
         QHeaderView::Stretch);
+    ui->tableView->verticalHeader()->setSectionResizeMode(
+        QHeaderView::ResizeToContents);
+    connect(listModel, &FileListModel::downloadProgress, this,
+            &MainWindow::on_download_progress);
 }
 
 MainWindow::~MainWindow()
@@ -89,4 +93,12 @@ void MainWindow::on_lineEdit_editingFinished()
 {
     savePrefix = ui->lineEdit->text();
     listModel->setSavePrefix(savePrefix);
+}
+
+void MainWindow::on_download_progress(const QString &name, int percent,
+                                      double rate)
+{
+    ui->progressDownload->setValue(percent);
+    ui->progressDownload->setFormat(name + ": %p% (" + QString::number(rate) +
+                                    "kB/s)");
 }
