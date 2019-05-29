@@ -6,6 +6,7 @@
 #include <QNetworkReply>
 #include <QObject>
 #include <QUrl>
+#include <QTimer>
 
 class FileInfo : public QObject
 {
@@ -43,7 +44,9 @@ private slots:
 
     void on_networkManager_finished(QNetworkReply *reply);
     void on_download_ready_read();
-    void on_download_finished();
+
+    void on_timeout();
+    void on_download_progress(qint64 bytesReceived, qint64 bytesTotal);
 
 private:
     QUrl fileUrl;
@@ -52,6 +55,7 @@ private:
     QNetworkReply *downloadReply{nullptr};
     QNetworkAccessManager networkManager{this};
     QFile *file{nullptr};
+    QTimer timeout;
     bool downloaded{false};
 };
 

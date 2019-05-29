@@ -10,6 +10,8 @@ FileInfo::FileInfo(QUrl url, QObject *parent)
 {
     connect(&networkManager, &QNetworkAccessManager::finished, this,
             &FileInfo::on_networkManager_finished);
+    timeout.setSingleShot(true);
+    connect(&timeout, &QTimer::timeout, this, &FileInfo::on_timeout);
 }
 
 void FileInfo::on_networkManager_finished(QNetworkReply *reply)
@@ -32,20 +34,37 @@ void FileInfo::on_networkManager_finished(QNetworkReply *reply)
             {
                 qDebug() << reply->readAll();
             }
+            infoReply->deleteLater();
+            infoReply = nullptr;
         }
         else
         {
             qDebug() << "date reply error: " << reply->error();
             emit dateFetchError(this);
         }
+        timeout.stop();
     }
     else if (reply == downloadReply)
     {
-        if (reply->error() != QNetworkReply::NoError)
+        if (reply->error() == QNetworkReply::NoError)
         {
+            file->close();
+            downloaded = true;
+            downloadReply->deleteLater();
+            downloadReply = nullptr;
+            emit fileDownloaded(this);
+        }
+        else
+        {
+            file->remove();
+            downloadReply->deleteLater();
+            downloadReply = nullptr;
             qDebug() << "download error: " << reply->errorString();
             emit downloadError(this);
         }
+        file->deleteLater();
+        file = nullptr;
+        timeout.stop();
     }
 }
 
@@ -54,14 +73,27 @@ void FileInfo::on_download_ready_read()
     file->write(downloadReply->readAll());
 }
 
-void FileInfo::on_download_finished()
+void FileInfo::on_timeout()
 {
-    downloaded = true;
-    file->close();
-    delete file;
-    file          = nullptr;
-    downloadReply = nullptr;
-    emit fileDownloaded(this);
+    if (infoReply)
+    {
+        if (infoReply->isRunning())
+        {
+            infoReply->abort();
+        }
+    }
+    else if (downloadReply)
+    {
+        if (downloadReply->isRunning())
+        {
+            downloadReply->abort();
+        }
+    }
+}
+
+void FileInfo::on_download_progress(qint64 bytesReceived, qint64 bytesTotal)
+{
+    timeout.start(15000);
 }
 
 QString FileInfo::getFilePath() const
@@ -83,6 +115,7 @@ void FileInfo::getDate()
 {
     infoReply =
         networkManager.get(QNetworkRequest(QUrl(fileUrl.toString() + "/info")));
+    timeout.start(15000);
 }
 
 void FileInfo::download(const QString &savePrefix)
@@ -110,10 +143,12 @@ void FileInfo::download(const QString &savePrefix)
     }
     downloadReply = networkManager.get(QNetworkRequest(getFileUrl()));
 
-    connect(downloadReply, &QNetworkReply::finished, this,
-            &FileInfo::on_download_finished);
     connect(downloadReply, &QNetworkReply::readyRead, this,
             &FileInfo::on_download_ready_read);
+    connect(downloadReply, &QNetworkReply::downloadProgress, this,
+            &FileInfo::on_download_progress);
+
+    timeout.start(15000);
 }
 
 bool FileInfo::operator==(const FileInfo &rhs) const
