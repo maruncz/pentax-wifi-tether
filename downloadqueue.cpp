@@ -4,7 +4,6 @@ DownloadQueue::DownloadQueue(QObject *parent) : QObject(parent)
 {
     connect(&timer, &QTimer::timeout, this, &DownloadQueue::fetch);
     timer.setSingleShot(false);
-    timer.start(100);
 }
 
 void DownloadQueue::enqueue(FileInfo *fileinfo)
@@ -20,6 +19,7 @@ void DownloadQueue::enqueue(FileInfo *fileinfo)
 
 void DownloadQueue::fetch()
 {
+    QMutexLocker locker(&enqMutex);
     if (fetching || queue.isEmpty())
     {
         return;
@@ -38,6 +38,7 @@ void DownloadQueue::fetch()
 
 void DownloadQueue::on_downloaded(FileInfo *fileinfo)
 {
+    QMutexLocker locker(&enqMutex);
     qDebug() << "downloaded: " << fileinfo->getFileUrl();
     auto idx  = queue.indexOf(fileinfo);
     auto file = queue.at(idx);
@@ -62,4 +63,19 @@ void DownloadQueue::on_download_progress(const QString &name, int percent,
 void DownloadQueue::setSavePrefix(const QString &value)
 {
     savePrefix = value;
+}
+
+void DownloadQueue::start()
+{
+    timer.start(100);
+}
+
+void DownloadQueue::stop()
+{
+    QMutexLocker locker(&enqMutex);
+    timer.stop();
+    if (!queue.isEmpty())
+    {
+        queue.head()->abort();
+    }
 }

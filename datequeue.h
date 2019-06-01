@@ -17,6 +17,9 @@ public:
     void enqueue(FileInfo *fileinfo);
     bool urlExists(FileInfo *info) const;
 
+    void start();
+    void stop();
+
 signals:
 
     void enqueued(FileInfo *fileinfo);
@@ -33,8 +36,7 @@ private slots:
 
 private:
     QQueue<FileInfo *> queue;
-    QMutex enqMutex;
-    QMutex deqMutex;
+    mutable QMutex enqMutex;
     QTimer timer;
     QAtomicInt fetching{0};
 };

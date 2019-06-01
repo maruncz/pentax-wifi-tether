@@ -19,6 +19,9 @@ public:
 
     void setSavePrefix(const QString &value);
 
+    void start();
+    void stop();
+
 signals:
 
     void downloaded(FileInfo *fileinfo);

@@ -29,6 +29,8 @@ public:
 
     bool isDownloaded() const;
 
+    void abort();
+
 signals:
 
     void readyForDownload(FileInfo *fileinfo);

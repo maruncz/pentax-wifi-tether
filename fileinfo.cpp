@@ -25,7 +25,8 @@ void FileInfo::on_networkManager_finished(QNetworkReply *reply)
     {
         if (reply->error() == QNetworkReply::NoError)
         {
-            QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
+            auto data         = reply->readAll();
+            QJsonDocument doc = QJsonDocument::fromJson(data);
             QJsonObject obj   = doc.object();
             QString datetime = obj.value(QStringLiteral("datetime")).toString();
             if (!datetime.isEmpty())
@@ -37,7 +38,8 @@ void FileInfo::on_networkManager_finished(QNetworkReply *reply)
             }
             else
             {
-                qDebug() << reply->readAll();
+                qDebug() << "error fetching date: " << fileUrl << ": " << data;
+                emit dateFetchError(this);
             }
             infoReply->deleteLater();
             infoReply = nullptr;
@@ -131,6 +133,15 @@ QString FileInfo::getFileName() const
 
 void FileInfo::getDate()
 {
+    // if file is video (*.MOV)
+    auto ext = fileUrl.toString().split('.').back();
+    if (ext == QLatin1String("MOV"))
+    {
+        filePath = "videos/" + fileUrl.toString().split('/').back();
+        emit readyForDownload(this);
+        return;
+    }
+
     infoReply =
         networkManager.get(QNetworkRequest(QUrl(fileUrl.toString() + "/info")));
     timeout.start(15000);
@@ -211,6 +222,11 @@ bool FileInfo::alreadyDownloaded(const QString &savePrefix)
 bool FileInfo::isDownloaded() const
 {
     return downloaded;
+}
+
+void FileInfo::abort()
+{
+    on_timeout();
 }
 
 QUrl FileInfo::getFileUrl() const

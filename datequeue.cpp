@@ -5,7 +5,6 @@ DateQueue::DateQueue(QObject *parent) : QObject(parent)
 {
     connect(&timer, &QTimer::timeout, this, &DateQueue::fetch);
     timer.setSingleShot(false);
-    timer.start(100);
 }
 
 void DateQueue::enqueue(FileInfo *fileinfo)
@@ -22,13 +21,33 @@ void DateQueue::enqueue(FileInfo *fileinfo)
 
 bool DateQueue::urlExists(FileInfo *info) const
 {
+    QMutexLocker locker(&enqMutex);
     auto it = std::find_if(queue.begin(), queue.end(),
                            [&info](const FileInfo *p) { return *p == *info; });
     return it != queue.end();
 }
 
+void DateQueue::start()
+{
+    if (!timer.isActive())
+    {
+        timer.start(100);
+    }
+}
+
+void DateQueue::stop()
+{
+    QMutexLocker locker(&enqMutex);
+    timer.stop();
+    if (!queue.isEmpty())
+    {
+        queue.head()->abort();
+    }
+}
+
 void DateQueue::fetch()
 {
+    QMutexLocker locker(&enqMutex);
     if (fetching || queue.isEmpty())
     {
         return;
@@ -39,6 +58,7 @@ void DateQueue::fetch()
 
 void DateQueue::on_fetched(FileInfo *fileinfo)
 {
+    QMutexLocker locker(&enqMutex);
     qDebug() << "fetched date: " << fileinfo->getFileUrl();
     auto idx = queue.indexOf(fileinfo);
     queue.removeAt(idx);

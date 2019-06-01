@@ -160,10 +160,14 @@ void FileListModel::setRun(bool value)
 {
     if (value)
     {
+        pendingList.start();
+        downloadList.start();
         timer.start(1000);
     }
     else
     {
+        pendingList.stop();
+        downloadList.stop();
         timer.stop();
     }
 }
