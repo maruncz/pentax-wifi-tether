@@ -29,6 +29,7 @@ private slots:
     void onDownloadProgress(const QString &name, int percent, double rate);
     void onGlobalDownloadProgress(int downloadedFiles, int totalFiles);
     void on_buttonDest_clicked();
+    void onConnectionLost();
 
 private:
     Ui::MainWindow *ui;

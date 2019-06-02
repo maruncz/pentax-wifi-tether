@@ -29,6 +29,8 @@ MainWindow::MainWindow(QWidget *parent)
             &MainWindow::onDownloadProgress);
     connect(listModel, &FileListModel::globalDownloadProgress, this,
             &MainWindow::onGlobalDownloadProgress);
+    connect(listModel, &FileListModel::connectionLost, this,
+            &MainWindow::onConnectionLost);
 }
 
 MainWindow::~MainWindow()
@@ -59,6 +61,8 @@ void MainWindow::onNetworkManagerFinished(QNetworkReply *reply)
             {
                 qDebug() << reply->readAll();
             }
+            QJsonValue model = obj.value(QStringLiteral("model"));
+            ui->labelConnection->setText("Connected to: " + model.toString());
         }
     }
 }
@@ -68,6 +72,7 @@ void MainWindow::on_buttonStart_clicked()
     listModel->setRun(true);
     ui->buttonStop->setEnabled(true);
     ui->buttonStart->setEnabled(false);
+    ui->buttonConnect->setEnabled(false);
 }
 
 void MainWindow::on_buttonStop_clicked()
@@ -75,18 +80,18 @@ void MainWindow::on_buttonStop_clicked()
     listModel->setRun(false);
     ui->buttonStop->setEnabled(false);
     ui->buttonStart->setEnabled(true);
+    ui->buttonConnect->setEnabled(true);
 }
 
 void MainWindow::onDownloadProgress(const QString &name, int percent,
-                                      double rate)
+                                    double rate)
 {
     ui->progressDownload->setValue(percent);
     ui->progressDownload->setFormat(name + ": %p% (" + QString::number(rate) +
                                     "kB/s)");
 }
 
-void MainWindow::onGlobalDownloadProgress(int downloadedFiles,
-                                             int totalFiles)
+void MainWindow::onGlobalDownloadProgress(int downloadedFiles, int totalFiles)
 {
     ui->progressGlobal->setMaximum(totalFiles);
     ui->progressGlobal->setValue(downloadedFiles);
@@ -109,4 +114,12 @@ void MainWindow::on_buttonDest_clicked()
     {
         ui->buttonConnect->setEnabled(false);
     }
+}
+
+void MainWindow::onConnectionLost()
+{
+    ui->buttonStop->setEnabled(false);
+    ui->buttonStart->setEnabled(false);
+    ui->buttonConnect->setEnabled(true);
+    ui->labelConnection->setText("Connection lost");
 }

@@ -36,6 +36,7 @@ signals:
 
     void downloadProgress(const QString &name, int percent, double rate);
     void globalDownloadProgress(int downloadedFiles, int totalFiles);
+    void connectionLost();
 
 private slots:
 
@@ -43,6 +44,7 @@ private slots:
     void onFileDownloaded(FileInfo *fileinfo);
     void onNetworkManagerFinished(QNetworkReply *reply);
     void onTimerTimeout();
+    void onTimeout();
 
 private:
     void update(FileInfo *fileinfo, const QVector<int> &roles = QVector<int>());
@@ -57,6 +59,7 @@ private:
     DownloadQueue downloadList;
     QList<FileInfo *> fileList;
     QTimer timer{this};
+    QTimer timeout{this};
 };
 
 #endif // FILELISTMODEL_H

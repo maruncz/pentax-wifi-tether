@@ -21,6 +21,9 @@ FileListModel::FileListModel(QObject *parent) : QAbstractTableModel(parent)
             &FileListModel::onDownloadProgress);
     connect(&downloadList, &DownloadQueue::downloaded, this,
             &FileListModel::onFileDownloaded);
+    timeout.setSingleShot(true);
+    timeout.setInterval(15000);
+    connect(&timeout, &QTimer::timeout, this, &FileListModel::onTimeout);
 }
 
 QVariant FileListModel::data(const QModelIndex &index, int role) const
@@ -133,6 +136,7 @@ void FileListModel::onNetworkManagerFinished(QNetworkReply *reply)
                     }
                 }
             }
+            timeout.start();
         }
     }
 }
@@ -141,6 +145,12 @@ void FileListModel::onTimerTimeout()
 {
     listReply = networkManager.get(
         QNetworkRequest(QUrl(QStringLiteral("http://192.168.0.1/v1/photos"))));
+}
+
+void FileListModel::onTimeout()
+{
+    setRun(false);
+    emit connectionLost();
 }
 
 void FileListModel::update(FileInfo *const fileinfo, const QVector<int> &roles)
@@ -172,7 +182,7 @@ void FileListModel::setRun(bool value)
 }
 
 void FileListModel::onDownloadProgress(const QString &name, int percent,
-                                         double rate)
+                                       double rate)
 {
     emit downloadProgress(name, percent, rate);
 }

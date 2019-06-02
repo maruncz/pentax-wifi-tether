@@ -55,7 +55,7 @@ void DownloadQueue::onDownloadError(FileInfo *fileinfo)
 }
 
 void DownloadQueue::onDownloadProgress(const QString &name, int percent,
-                                         double rate)
+                                       double rate)
 {
     emit downloadProgress(name, percent, rate);
 }

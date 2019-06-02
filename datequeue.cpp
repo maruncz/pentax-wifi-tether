@@ -12,8 +12,7 @@ void DateQueue::enqueue(FileInfo *fileinfo)
     QMutexLocker locker(&enqMutex);
     qDebug() << "enqueue date: " << fileinfo->getFileUrl();
     queue.enqueue(fileinfo);
-    connect(fileinfo, &FileInfo::readyForDownload, this,
-            &DateQueue::onFetched);
+    connect(fileinfo, &FileInfo::readyForDownload, this, &DateQueue::onFetched);
     connect(fileinfo, &FileInfo::dateFetchError, this,
             &DateQueue::onFetchError);
 }

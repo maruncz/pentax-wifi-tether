@@ -11,11 +11,11 @@ FileInfo::FileInfo(QUrl url, QObject *parent)
     connect(&networkManager, &QNetworkAccessManager::finished, this,
             &FileInfo::onNetworkManagerFinished);
     timeout.setSingleShot(true);
+    timeout.setInterval(5000);
     connect(&timeout, &QTimer::timeout, this, &FileInfo::onTimeout);
     rateTimer.setSingleShot(false);
     rateTimer.setInterval(1000);
-    connect(&rateTimer, &QTimer::timeout, this,
-            &FileInfo::onRateTimerTimeout);
+    connect(&rateTimer, &QTimer::timeout, this, &FileInfo::onRateTimerTimeout);
 }
 
 void FileInfo::onNetworkManagerFinished(QNetworkReply *reply)
@@ -100,7 +100,7 @@ void FileInfo::onTimeout()
 
 void FileInfo::onDownloadProgress(qint64 bytesReceived, qint64 bytesTotal)
 {
-    timeout.start(15000);
+    timeout.start();
     double pecrd =
         static_cast<double>(bytesReceived) / static_cast<double>(bytesTotal);
     int percent  = static_cast<int>(std::round(100 * pecrd));
@@ -143,7 +143,7 @@ void FileInfo::getDate()
 
     infoReply =
         networkManager.get(QNetworkRequest(QUrl(fileUrl.toString() + "/info")));
-    timeout.start(15000);
+    timeout.start();
 }
 
 void FileInfo::download(const QString &savePrefix)
@@ -176,7 +176,7 @@ void FileInfo::download(const QString &savePrefix)
     connect(downloadReply, &QNetworkReply::downloadProgress, this,
             &FileInfo::onDownloadProgress);
 
-    timeout.start(15000);
+    timeout.start();
     rateTimer.start();
 }
 
