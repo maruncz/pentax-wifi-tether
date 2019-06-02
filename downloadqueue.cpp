@@ -19,7 +19,6 @@ void DownloadQueue::enqueue(FileInfo *fileinfo)
 
 void DownloadQueue::fetch()
 {
-    QMutexLocker locker(&enqMutex);
     if (fetching || queue.isEmpty())
     {
         return;
