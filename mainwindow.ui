@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>300</height>
+    <height>400</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -25,12 +25,23 @@
       </property>
       <layout class="QGridLayout" name="gridLayout_2">
        <item row="1" column="0">
-        <widget class="QLineEdit" name="lineEdit"/>
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>Destination:</string>
+         </property>
+        </widget>
        </item>
        <item row="1" column="1">
-        <widget class="QPushButton" name="pushButton">
+        <widget class="QLineEdit" name="lineEdit">
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="2">
+        <widget class="QPushButton" name="buttonDest">
          <property name="text">
-          <string>Set Dir</string>
+          <string>...</string>
          </property>
         </widget>
        </item>
@@ -80,6 +91,9 @@
       <layout class="QGridLayout" name="gridLayout_3">
        <item row="0" column="0">
         <widget class="QPushButton" name="buttonConnect">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="text">
           <string>Connect</string>
          </property>
@@ -138,6 +152,14 @@
   <widget class="QStatusBar" name="statusBar"/>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <tabstops>
+  <tabstop>lineEdit</tabstop>
+  <tabstop>buttonDest</tabstop>
+  <tabstop>buttonConnect</tabstop>
+  <tabstop>buttonStart</tabstop>
+  <tabstop>buttonStop</tabstop>
+  <tabstop>tableView</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

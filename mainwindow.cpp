@@ -5,6 +5,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileDialog>
+#include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -45,7 +46,7 @@ MainWindow::~MainWindow()
 void MainWindow::on_buttonConnect_clicked()
 {
     connectReply = networkManager.get(
-        QNetworkRequest(QUrl(QStringLiteral("http://192.168.0.1/v1/ping"))));
+        QNetworkRequest(QUrl(QStringLiteral("http://192.168.0.1/v1/props"))));
 }
 
 void MainWindow::on_networkManager_finished(QNetworkReply *reply)
@@ -83,20 +84,6 @@ void MainWindow::on_buttonStop_clicked()
     ui->buttonStart->setEnabled(true);
 }
 
-void MainWindow::on_pushButton_clicked()
-{
-    savePrefix = QFileDialog::getExistingDirectory(
-        this, QStringLiteral("select download location"));
-    ui->lineEdit->setText(savePrefix);
-    listModel->setSavePrefix(savePrefix);
-}
-
-void MainWindow::on_lineEdit_editingFinished()
-{
-    savePrefix = ui->lineEdit->text();
-    listModel->setSavePrefix(savePrefix);
-}
-
 void MainWindow::on_download_progress(const QString &name, int percent,
                                       double rate)
 {
@@ -112,4 +99,21 @@ void MainWindow::on_global_download_progress(int downloadedFiles,
     ui->progressGlobal->setValue(downloadedFiles);
     ui->progressGlobal->setFormat("Files: " + QString::number(downloadedFiles) +
                                   '/' + QString::number(totalFiles) + " %p%");
+}
+
+void MainWindow::on_buttonDest_clicked()
+{
+    savePrefix = QFileDialog::getExistingDirectory(
+        this, QStringLiteral("select download location"));
+    ui->lineEdit->setText(savePrefix);
+    listModel->setSavePrefix(savePrefix);
+    QFileInfo dir(savePrefix);
+    if (dir.isDir() && dir.isWritable())
+    {
+        ui->buttonConnect->setEnabled(true);
+    }
+    else
+    {
+        ui->buttonConnect->setEnabled(false);
+    }
 }
