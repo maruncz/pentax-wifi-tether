@@ -31,6 +31,10 @@ MainWindow::MainWindow(QWidget *parent)
             &MainWindow::onGlobalDownloadProgress);
     connect(listModel, &FileListModel::connectionLost, this,
             &MainWindow::onConnectionLost);
+
+    timeout.setSingleShot(true);
+    timeout.setInterval(1000);
+    connect(&timeout, &QTimer::timeout, this, &MainWindow::onTimeout);
 }
 
 MainWindow::~MainWindow()
@@ -40,8 +44,10 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_buttonConnect_clicked()
 {
+    ui->labelConnection->setText(QStringLiteral("Connecting..."));
     connectReply = networkManager.get(
         QNetworkRequest(QUrl(QStringLiteral("http://192.168.0.1/v1/props"))));
+    timeout.start();
 }
 
 void MainWindow::onNetworkManagerFinished(QNetworkReply *reply)
@@ -64,6 +70,13 @@ void MainWindow::onNetworkManagerFinished(QNetworkReply *reply)
             QJsonValue model = obj.value(QStringLiteral("model"));
             ui->labelConnection->setText("Connected to: " + model.toString());
         }
+        else
+        {
+            qDebug() << "Connection error: " << reply->errorString();
+            ui->labelConnection->setText("Connection error: " +
+                                         reply->errorString());
+        }
+        timeout.stop();
     }
 }
 
@@ -121,5 +134,11 @@ void MainWindow::onConnectionLost()
     ui->buttonStop->setEnabled(false);
     ui->buttonStart->setEnabled(false);
     ui->buttonConnect->setEnabled(true);
-    ui->labelConnection->setText("Connection lost");
+    ui->labelConnection->setText(QStringLiteral("Connection lost"));
+}
+
+void MainWindow::onTimeout()
+{
+    connectReply->abort();
+    ui->labelConnection->setText(QStringLiteral("Connection timed out"));
 }

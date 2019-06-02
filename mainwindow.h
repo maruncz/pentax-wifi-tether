@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QNetworkAccessManager>
+#include <QTimer>
 
 class FileListModel;
 class QNetworkReply;
@@ -30,6 +31,7 @@ private slots:
     void onGlobalDownloadProgress(int downloadedFiles, int totalFiles);
     void on_buttonDest_clicked();
     void onConnectionLost();
+    void onTimeout();
 
 private:
     Ui::MainWindow *ui;
@@ -39,6 +41,7 @@ private:
     FileListModel *listModel{nullptr};
     QSortFilterProxyModel *sortModel{nullptr};
     QString savePrefix;
+    QTimer timeout;
 };
 
 #endif // MAINWINDOW_H
