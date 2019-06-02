@@ -16,7 +16,6 @@ void DateQueue::enqueue(FileInfo *fileinfo)
             &DateQueue::on_fetched);
     connect(fileinfo, &FileInfo::dateFetchError, this,
             &DateQueue::on_fetch_error);
-    emit enqueued(fileinfo);
 }
 
 bool DateQueue::urlExists(FileInfo *info) const

@@ -22,7 +22,6 @@ public:
 
 signals:
 
-    void enqueued(FileInfo *fileinfo);
     void ready(FileInfo *fileinfo);
 
 public slots:
