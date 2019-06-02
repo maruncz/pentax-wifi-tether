@@ -1,4 +1,5 @@
 #include "downloadqueue.h"
+#include "fileinfo.h"
 
 DownloadQueue::DownloadQueue(QObject *parent) : QObject(parent)
 {

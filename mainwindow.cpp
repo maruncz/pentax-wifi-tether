@@ -1,19 +1,12 @@
 #include "mainwindow.h"
+#include "filelistmodel.h"
 #include "ui_mainwindow.h"
-#include <QDateTime>
-#include <QDebug>
-#include <QDir>
-#include <QFile>
 #include <QFileDialog>
-#include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QJsonValue>
-#include <QMediaPlayer>
-#include <QNetworkRequest>
-#include <QUrl>
-#include <algorithm>
+#include <QNetworkReply>
+#include <QSortFilterProxyModel>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow)

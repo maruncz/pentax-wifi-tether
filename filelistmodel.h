@@ -3,13 +3,12 @@
 
 #include "datequeue.h"
 #include "downloadqueue.h"
-#include "fileinfo.h"
 #include <QAbstractTableModel>
-#include <QFile>
 #include <QNetworkAccessManager>
-#include <QNetworkReply>
-#include <QObject>
-#include <QTimer>
+
+class FileInfo;
+class QNetworkReply;
+class QObject;
 
 class FileListModel : public QAbstractTableModel
 {

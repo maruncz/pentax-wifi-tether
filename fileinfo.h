@@ -1,12 +1,12 @@
 #ifndef FILEINFO_H
 #define FILEINFO_H
 
-#include <QFile>
 #include <QNetworkAccessManager>
-#include <QNetworkReply>
-#include <QObject>
 #include <QTimer>
-#include <QUrl>
+
+class QFile;
+class QNetworkReply;
+class QObject;
 
 class FileInfo : public QObject
 {

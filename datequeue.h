@@ -1,12 +1,12 @@
 #ifndef DATEQUEUE_H
 #define DATEQUEUE_H
 
-#include "fileinfo.h"
-#include <QAtomicInt>
 #include <QMutex>
-#include <QObject>
 #include <QQueue>
 #include <QTimer>
+
+class FileInfo;
+class QObject;
 
 class DateQueue : public QObject
 {

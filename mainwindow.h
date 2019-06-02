@@ -1,14 +1,12 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "fileinfo.h"
-#include "filelistmodel.h"
-#include <QFile>
 #include <QMainWindow>
 #include <QNetworkAccessManager>
-#include <QNetworkReply>
-#include <QSortFilterProxyModel>
-#include <QTimer>
+
+class FileListModel;
+class QNetworkReply;
+class QSortFilterProxyModel;
 
 namespace Ui
 {

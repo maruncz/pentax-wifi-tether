@@ -1,13 +1,12 @@
 #ifndef DOWNLOADQUEUE_H
 #define DOWNLOADQUEUE_H
 
-#include "fileinfo.h"
-#include <QAtomicInt>
 #include <QMutex>
-#include <QObject>
 #include <QQueue>
-#include <QString>
 #include <QTimer>
+
+class FileInfo;
+class QObject;
 
 class DownloadQueue : public QObject
 {
@@ -38,7 +37,6 @@ public slots:
 private:
     QQueue<FileInfo *> queue;
     QMutex enqMutex;
-    QMutex deqMutex;
     QTimer timer;
     QString savePrefix;
     QAtomicInt fetching{0};

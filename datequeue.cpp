@@ -1,5 +1,5 @@
 #include "datequeue.h"
-#include <QMutexLocker>
+#include "fileinfo.h"
 
 DateQueue::DateQueue(QObject *parent) : QObject(parent)
 {

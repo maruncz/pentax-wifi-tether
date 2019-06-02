@@ -1,11 +1,10 @@
 #include "filelistmodel.h"
+#include "fileinfo.h"
 #include <QBrush>
-#include <QDir>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QJsonValue>
-#include <algorithm>
+#include <QNetworkReply>
 
 FileListModel::FileListModel(QObject *parent) : QAbstractTableModel(parent)
 {

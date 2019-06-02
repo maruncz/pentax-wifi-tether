@@ -2,9 +2,8 @@
 #include <QDir>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QJsonValue>
+#include <QNetworkReply>
 #include <cmath>
-#include <utility>
 
 FileInfo::FileInfo(QUrl url, QObject *parent)
     : QObject(parent), fileUrl(std::move(url))
