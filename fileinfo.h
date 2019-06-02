@@ -4,7 +4,6 @@
 #include <QNetworkAccessManager>
 #include <QTimer>
 
-class QFile;
 class QNetworkReply;
 class QObject;
 
@@ -44,7 +43,6 @@ public slots:
 private slots:
 
     void onNetworkManagerFinished(QNetworkReply *reply);
-    void onDownloadReadyRead();
 
     void onTimeout();
     void onDownloadProgress(qint64 bytesReceived, qint64 bytesTotal);
@@ -59,12 +57,12 @@ private:
     QNetworkReply *infoReply{nullptr};
     QNetworkReply *downloadReply{nullptr};
     QNetworkAccessManager networkManager{this};
-    QFile *file{nullptr};
     QTimer timeout;
     QTimer rateTimer;
     qint64 bytesWrittenPrevious{0};
     qint64 bytesWritten{0};
     double downloadRate{0.0};
+    QString savePrefix;
 
     bool downloaded{false};
 };

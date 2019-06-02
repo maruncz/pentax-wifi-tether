@@ -54,30 +54,34 @@ void FileInfo::onNetworkManagerFinished(QNetworkReply *reply)
     {
         if (reply->error() == QNetworkReply::NoError)
         {
-            file->close();
-            downloaded = true;
+            QFile file(savePrefix + '/' + filePath);
+            auto data = downloadReply->readAll();
             downloadReply->deleteLater();
             downloadReply = nullptr;
-            emit fileDownloaded(this);
+            if (!file.open(QFile::WriteOnly))
+            {
+                qDebug() << "cannot open file " << filePath << ": "
+                         << file.errorString();
+                emit downloadError(this);
+            }
+            else
+            {
+                downloaded = true;
+                file.write(data);
+                file.close();
+                emit fileDownloaded(this);
+            }
         }
         else
         {
-            file->remove();
             downloadReply->deleteLater();
             downloadReply = nullptr;
             qDebug() << "download error: " << reply->errorString();
             emit downloadError(this);
         }
-        file->deleteLater();
-        file = nullptr;
         timeout.stop();
         rateTimer.stop();
     }
-}
-
-void FileInfo::onDownloadReadyRead()
-{
-    file->write(downloadReply->readAll());
 }
 
 void FileInfo::onTimeout()
@@ -96,6 +100,8 @@ void FileInfo::onTimeout()
             downloadReply->abort();
         }
     }
+    bytesWritten         = 0;
+    bytesWrittenPrevious = 0;
 }
 
 void FileInfo::onDownloadProgress(qint64 bytesReceived, qint64 bytesTotal)
@@ -162,17 +168,9 @@ void FileInfo::download(const QString &savePrefix)
         }
     }
 
-    file = new QFile(savePrefix + '/' + getFilePath(), this);
-    if (!file->open(QIODevice::WriteOnly))
-    {
-        qDebug() << "cannot open file " << file->fileName() << ": "
-                 << file->errorString();
-        return;
-    }
-    downloadReply = networkManager.get(QNetworkRequest(getFileUrl()));
+    this->savePrefix = savePrefix;
 
-    connect(downloadReply, &QNetworkReply::readyRead, this,
-            &FileInfo::onDownloadReadyRead);
+    downloadReply = networkManager.get(QNetworkRequest(getFileUrl()));
     connect(downloadReply, &QNetworkReply::downloadProgress, this,
             &FileInfo::onDownloadProgress);
 
