@@ -13,9 +13,9 @@ void DownloadQueue::enqueue(FileInfo *fileinfo)
     qDebug() << "enqueue download: " << fileinfo->getFileUrl();
     queue.enqueue(fileinfo);
     connect(fileinfo, &FileInfo::fileDownloaded, this,
-            &DownloadQueue::on_downloaded);
+            &DownloadQueue::onDownloaded);
     connect(fileinfo, &FileInfo::downloadError, this,
-            &DownloadQueue::on_download_error);
+            &DownloadQueue::onDownloadError);
 }
 
 void DownloadQueue::fetch()
@@ -27,16 +27,16 @@ void DownloadQueue::fetch()
     fetching = 1;
     if (queue.head()->isDownloaded())
     {
-        on_downloaded(queue.head());
+        onDownloaded(queue.head());
         return;
     }
     auto file = queue.head();
     connect(file, &FileInfo::downloadProgress, this,
-            &DownloadQueue::on_download_progress);
+            &DownloadQueue::onDownloadProgress);
     file->download(savePrefix);
 }
 
-void DownloadQueue::on_downloaded(FileInfo *fileinfo)
+void DownloadQueue::onDownloaded(FileInfo *fileinfo)
 {
     QMutexLocker locker(&enqMutex);
     qDebug() << "downloaded: " << fileinfo->getFileUrl();
@@ -48,13 +48,13 @@ void DownloadQueue::on_downloaded(FileInfo *fileinfo)
     fetching = 0;
 }
 
-void DownloadQueue::on_download_error(FileInfo *fileinfo)
+void DownloadQueue::onDownloadError(FileInfo *fileinfo)
 {
     qDebug() << "download error: " << fileinfo->getFileUrl();
     fetching = 0;
 }
 
-void DownloadQueue::on_download_progress(const QString &name, int percent,
+void DownloadQueue::onDownloadProgress(const QString &name, int percent,
                                          double rate)
 {
     emit downloadProgress(name, percent, rate);

@@ -13,7 +13,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     connect(&networkManager, &QNetworkAccessManager::finished, this,
-            &MainWindow::on_networkManager_finished);
+            &MainWindow::onNetworkManagerFinished);
     listModel = new FileListModel(this);
     sortModel = new QSortFilterProxyModel(this);
     sortModel->setSourceModel(listModel);
@@ -26,9 +26,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->tableView->verticalHeader()->setSectionResizeMode(
         QHeaderView::ResizeToContents);
     connect(listModel, &FileListModel::downloadProgress, this,
-            &MainWindow::on_download_progress);
+            &MainWindow::onDownloadProgress);
     connect(listModel, &FileListModel::globalDownloadProgress, this,
-            &MainWindow::on_global_download_progress);
+            &MainWindow::onGlobalDownloadProgress);
 }
 
 MainWindow::~MainWindow()
@@ -42,7 +42,7 @@ void MainWindow::on_buttonConnect_clicked()
         QNetworkRequest(QUrl(QStringLiteral("http://192.168.0.1/v1/props"))));
 }
 
-void MainWindow::on_networkManager_finished(QNetworkReply *reply)
+void MainWindow::onNetworkManagerFinished(QNetworkReply *reply)
 {
     if (reply == connectReply)
     {
@@ -77,7 +77,7 @@ void MainWindow::on_buttonStop_clicked()
     ui->buttonStart->setEnabled(true);
 }
 
-void MainWindow::on_download_progress(const QString &name, int percent,
+void MainWindow::onDownloadProgress(const QString &name, int percent,
                                       double rate)
 {
     ui->progressDownload->setValue(percent);
@@ -85,7 +85,7 @@ void MainWindow::on_download_progress(const QString &name, int percent,
                                     "kB/s)");
 }
 
-void MainWindow::on_global_download_progress(int downloadedFiles,
+void MainWindow::onGlobalDownloadProgress(int downloadedFiles,
                                              int totalFiles)
 {
     ui->progressGlobal->setMaximum(totalFiles);

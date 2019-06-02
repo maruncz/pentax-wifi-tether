@@ -39,12 +39,12 @@ signals:
 
 private slots:
 
-    void on_download_progress(const QString &name, int percent, double rate);
-    void on_file_downloaded(FileInfo *fileinfo);
+    void onDownloadProgress(const QString &name, int percent, double rate);
+    void onFileDownloaded(FileInfo *fileinfo);
+    void onNetworkManagerFinished(QNetworkReply *reply);
+    void onTimerTimeout();
 
 private:
-    void on_networkManager_finished(QNetworkReply *reply);
-    void on_timer_timeout();
     void update(FileInfo *fileinfo, const QVector<int> &roles = QVector<int>());
     void setDownloaded(FileInfo *info);
 

@@ -13,9 +13,9 @@ void DateQueue::enqueue(FileInfo *fileinfo)
     qDebug() << "enqueue date: " << fileinfo->getFileUrl();
     queue.enqueue(fileinfo);
     connect(fileinfo, &FileInfo::readyForDownload, this,
-            &DateQueue::on_fetched);
+            &DateQueue::onFetched);
     connect(fileinfo, &FileInfo::dateFetchError, this,
-            &DateQueue::on_fetch_error);
+            &DateQueue::onFetchError);
 }
 
 bool DateQueue::urlExists(FileInfo *info) const
@@ -55,7 +55,7 @@ void DateQueue::fetch()
     queue.head()->getDate();
 }
 
-void DateQueue::on_fetched(FileInfo *fileinfo)
+void DateQueue::onFetched(FileInfo *fileinfo)
 {
     QMutexLocker locker(&enqMutex);
     qDebug() << "fetched date: " << fileinfo->getFileUrl();
@@ -65,7 +65,7 @@ void DateQueue::on_fetched(FileInfo *fileinfo)
     fetching = 0;
 }
 
-void DateQueue::on_fetch_error(FileInfo *fileinfo)
+void DateQueue::onFetchError(FileInfo *fileinfo)
 {
     qDebug() << "error fetching date: " << fileinfo->getFileUrl();
     fetching = 0;

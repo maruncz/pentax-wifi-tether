@@ -43,13 +43,13 @@ public slots:
 
 private slots:
 
-    void on_networkManager_finished(QNetworkReply *reply);
-    void on_download_ready_read();
+    void onNetworkManagerFinished(QNetworkReply *reply);
+    void onDownloadReadyRead();
 
-    void on_timeout();
-    void on_download_progress(qint64 bytesReceived, qint64 bytesTotal);
+    void onTimeout();
+    void onDownloadProgress(qint64 bytesReceived, qint64 bytesTotal);
 
-    void on_rateTimer_timeout();
+    void onRateTimerTimeout();
 
 private:
     bool alreadyDownloaded(const QString &savePrefix);

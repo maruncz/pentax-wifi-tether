@@ -9,8 +9,8 @@
 FileListModel::FileListModel(QObject *parent) : QAbstractTableModel(parent)
 {
     connect(&networkManager, &QNetworkAccessManager::finished, this,
-            &FileListModel::on_networkManager_finished);
-    connect(&timer, &QTimer::timeout, this, &FileListModel::on_timer_timeout);
+            &FileListModel::onNetworkManagerFinished);
+    connect(&timer, &QTimer::timeout, this, &FileListModel::onTimerTimeout);
     timer.setSingleShot(false);
     connect(&pendingList, &DateQueue::ready, &downloadList,
             &DownloadQueue::enqueue);
@@ -18,9 +18,9 @@ FileListModel::FileListModel(QObject *parent) : QAbstractTableModel(parent)
     connect(&downloadList, &DownloadQueue::downloaded, this,
             &FileListModel::setDownloaded);
     connect(&downloadList, &DownloadQueue::downloadProgress, this,
-            &FileListModel::on_download_progress);
+            &FileListModel::onDownloadProgress);
     connect(&downloadList, &DownloadQueue::downloaded, this,
-            &FileListModel::on_file_downloaded);
+            &FileListModel::onFileDownloaded);
 }
 
 QVariant FileListModel::data(const QModelIndex &index, int role) const
@@ -80,7 +80,7 @@ void FileListModel::append(FileInfo *value)
     beginInsertRows(QModelIndex(), fileList.size(), fileList.size());
     fileList.append(value);
     endInsertRows();
-    on_file_downloaded(nullptr);
+    onFileDownloaded(nullptr);
 }
 
 bool FileListModel::urlExists(FileInfo *const info) const
@@ -101,7 +101,7 @@ void FileListModel::setDownloaded(FileInfo *info)
     emit dataChanged(midx, midx, QVector<int>(Qt::DisplayRole));
 }
 
-void FileListModel::on_networkManager_finished(QNetworkReply *reply)
+void FileListModel::onNetworkManagerFinished(QNetworkReply *reply)
 {
     if (reply == listReply)
     {
@@ -137,7 +137,7 @@ void FileListModel::on_networkManager_finished(QNetworkReply *reply)
     }
 }
 
-void FileListModel::on_timer_timeout()
+void FileListModel::onTimerTimeout()
 {
     listReply = networkManager.get(
         QNetworkRequest(QUrl(QStringLiteral("http://192.168.0.1/v1/photos"))));
@@ -171,13 +171,13 @@ void FileListModel::setRun(bool value)
     }
 }
 
-void FileListModel::on_download_progress(const QString &name, int percent,
+void FileListModel::onDownloadProgress(const QString &name, int percent,
                                          double rate)
 {
     emit downloadProgress(name, percent, rate);
 }
 
-void FileListModel::on_file_downloaded(FileInfo * /*fileinfo*/)
+void FileListModel::onFileDownloaded(FileInfo * /*fileinfo*/)
 {
     int numDownloaded = 0;
     Q_FOREACH (auto file, fileList)

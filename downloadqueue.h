@@ -30,9 +30,9 @@ public slots:
 
     void fetch();
 
-    void on_downloaded(FileInfo *fileinfo);
-    void on_download_error(FileInfo *fileinfo);
-    void on_download_progress(const QString &name, int percent, double rate);
+    void onDownloaded(FileInfo *fileinfo);
+    void onDownloadError(FileInfo *fileinfo);
+    void onDownloadProgress(const QString &name, int percent, double rate);
 
 private:
     QQueue<FileInfo *> queue;

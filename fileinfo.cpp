@@ -9,16 +9,16 @@ FileInfo::FileInfo(QUrl url, QObject *parent)
     : QObject(parent), fileUrl(std::move(url))
 {
     connect(&networkManager, &QNetworkAccessManager::finished, this,
-            &FileInfo::on_networkManager_finished);
+            &FileInfo::onNetworkManagerFinished);
     timeout.setSingleShot(true);
-    connect(&timeout, &QTimer::timeout, this, &FileInfo::on_timeout);
+    connect(&timeout, &QTimer::timeout, this, &FileInfo::onTimeout);
     rateTimer.setSingleShot(false);
     rateTimer.setInterval(1000);
     connect(&rateTimer, &QTimer::timeout, this,
-            &FileInfo::on_rateTimer_timeout);
+            &FileInfo::onRateTimerTimeout);
 }
 
-void FileInfo::on_networkManager_finished(QNetworkReply *reply)
+void FileInfo::onNetworkManagerFinished(QNetworkReply *reply)
 {
     if (reply == infoReply)
     {
@@ -75,12 +75,12 @@ void FileInfo::on_networkManager_finished(QNetworkReply *reply)
     }
 }
 
-void FileInfo::on_download_ready_read()
+void FileInfo::onDownloadReadyRead()
 {
     file->write(downloadReply->readAll());
 }
 
-void FileInfo::on_timeout()
+void FileInfo::onTimeout()
 {
     if (infoReply)
     {
@@ -98,7 +98,7 @@ void FileInfo::on_timeout()
     }
 }
 
-void FileInfo::on_download_progress(qint64 bytesReceived, qint64 bytesTotal)
+void FileInfo::onDownloadProgress(qint64 bytesReceived, qint64 bytesTotal)
 {
     timeout.start(15000);
     double pecrd =
@@ -108,7 +108,7 @@ void FileInfo::on_download_progress(qint64 bytesReceived, qint64 bytesTotal)
     emit downloadProgress(getFileName(), percent, downloadRate);
 }
 
-void FileInfo::on_rateTimer_timeout()
+void FileInfo::onRateTimerTimeout()
 {
     downloadRate =
         static_cast<double>(bytesWritten - bytesWrittenPrevious) / 1000.0;
@@ -172,9 +172,9 @@ void FileInfo::download(const QString &savePrefix)
     downloadReply = networkManager.get(QNetworkRequest(getFileUrl()));
 
     connect(downloadReply, &QNetworkReply::readyRead, this,
-            &FileInfo::on_download_ready_read);
+            &FileInfo::onDownloadReadyRead);
     connect(downloadReply, &QNetworkReply::downloadProgress, this,
-            &FileInfo::on_download_progress);
+            &FileInfo::onDownloadProgress);
 
     timeout.start(15000);
     rateTimer.start();
@@ -225,7 +225,7 @@ bool FileInfo::isDownloaded() const
 
 void FileInfo::abort()
 {
-    on_timeout();
+    onTimeout();
 }
 
 QUrl FileInfo::getFileUrl() const

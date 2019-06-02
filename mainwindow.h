@@ -23,11 +23,11 @@ public:
 
 private slots:
     void on_buttonConnect_clicked();
-    void on_networkManager_finished(QNetworkReply *reply);
+    void onNetworkManagerFinished(QNetworkReply *reply);
     void on_buttonStart_clicked();
     void on_buttonStop_clicked();
-    void on_download_progress(const QString &name, int percent, double rate);
-    void on_global_download_progress(int downloadedFiles, int totalFiles);
+    void onDownloadProgress(const QString &name, int percent, double rate);
+    void onGlobalDownloadProgress(int downloadedFiles, int totalFiles);
     void on_buttonDest_clicked();
 
 private:
