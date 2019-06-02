@@ -34,7 +34,7 @@ QVariant FileListModel::data(const QModelIndex &index, int role) const
     }
     switch (role)
     {
-        case Qt::DisplayRole: return fileList.at(index.row())->getFilePath();
+        case Qt::DisplayRole: return fileList.at(index.row())->getFileName();
 
         case Qt::BackgroundRole:
             if (fileList.at(index.row())->isDownloaded())
