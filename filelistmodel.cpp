@@ -119,6 +119,12 @@ void FileListModel::onNetworkManagerFinished(QNetworkReply *reply)
                     d.toObject().value(QStringLiteral("files")).toArray();
                 for (const auto f : files)
                 {
+                    auto ext = f.toString().split('.').back();
+                    // skip video files
+                    if (ext == QLatin1String("MOV"))
+                    {
+                        continue;
+                    }
                     QUrl url =
                         "http://192.168.0.1/v1/photos/" +
                         d.toObject().value(QStringLiteral("name")).toString() +
