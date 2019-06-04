@@ -1,23 +1,29 @@
 #include "filelistmodel.h"
+#include "fileinfo.h"
 #include <QBrush>
-#include <QDir>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QJsonValue>
-#include <algorithm>
+#include <QNetworkReply>
 
 FileListModel::FileListModel(QObject *parent) : QAbstractTableModel(parent)
 {
     connect(&networkManager, &QNetworkAccessManager::finished, this,
-            &FileListModel::on_networkManager_finished);
-    connect(&timer, &QTimer::timeout, this, &FileListModel::on_timer_timeout);
+            &FileListModel::onNetworkManagerFinished);
+    connect(&timer, &QTimer::timeout, this, &FileListModel::onTimerTimeout);
     timer.setSingleShot(false);
     connect(&pendingList, &DateQueue::ready, &downloadList,
             &DownloadQueue::enqueue);
     connect(&pendingList, &DateQueue::ready, this, &FileListModel::append);
     connect(&downloadList, &DownloadQueue::downloaded, this,
-            [this](FileInfo *info) { this->setDownloaded(info, true); });
+            &FileListModel::setDownloaded);
+    connect(&downloadList, &DownloadQueue::downloadProgress, this,
+            &FileListModel::onDownloadProgress);
+    connect(&downloadList, &DownloadQueue::downloaded, this,
+            &FileListModel::onFileDownloaded);
+    timeout.setSingleShot(true);
+    timeout.setInterval(15000);
+    connect(&timeout, &QTimer::timeout, this, &FileListModel::onTimeout);
 }
 
 QVariant FileListModel::data(const QModelIndex &index, int role) const
@@ -28,10 +34,10 @@ QVariant FileListModel::data(const QModelIndex &index, int role) const
     }
     switch (role)
     {
-        case Qt::DisplayRole: return fileList.at(index.row())->getFilePath();
+        case Qt::DisplayRole: return fileList.at(index.row())->getFileName();
 
         case Qt::BackgroundRole:
-            if (fileList.at(index.row())->downloaded)
+            if (fileList.at(index.row())->isDownloaded())
             {
                 return QBrush(Qt::green);
             }
@@ -77,6 +83,7 @@ void FileListModel::append(FileInfo *value)
     beginInsertRows(QModelIndex(), fileList.size(), fileList.size());
     fileList.append(value);
     endInsertRows();
+    onFileDownloaded(nullptr);
 }
 
 bool FileListModel::urlExists(FileInfo *const info) const
@@ -90,15 +97,14 @@ bool FileListModel::urlExists(FileInfo *const info) const
     return pendingList.urlExists(info);
 }
 
-void FileListModel::setDownloaded(FileInfo *info, bool value)
+void FileListModel::setDownloaded(FileInfo *info)
 {
-    info->downloaded = value;
-    auto idx         = fileList.indexOf(info);
-    auto midx        = index(idx, 0);
+    auto idx  = fileList.indexOf(info);
+    auto midx = index(idx, 0);
     emit dataChanged(midx, midx, QVector<int>(Qt::DisplayRole));
 }
 
-void FileListModel::on_networkManager_finished(QNetworkReply *reply)
+void FileListModel::onNetworkManagerFinished(QNetworkReply *reply)
 {
     if (reply == listReply)
     {
@@ -113,6 +119,12 @@ void FileListModel::on_networkManager_finished(QNetworkReply *reply)
                     d.toObject().value(QStringLiteral("files")).toArray();
                 for (const auto f : files)
                 {
+                    auto ext = f.toString().split('.').back();
+                    // skip video files
+                    if (ext == QLatin1String("MOV"))
+                    {
+                        continue;
+                    }
                     QUrl url =
                         "http://192.168.0.1/v1/photos/" +
                         d.toObject().value(QStringLiteral("name")).toString() +
@@ -130,14 +142,21 @@ void FileListModel::on_networkManager_finished(QNetworkReply *reply)
                     }
                 }
             }
+            timeout.start();
         }
     }
 }
 
-void FileListModel::on_timer_timeout()
+void FileListModel::onTimerTimeout()
 {
     listReply = networkManager.get(
         QNetworkRequest(QUrl(QStringLiteral("http://192.168.0.1/v1/photos"))));
+}
+
+void FileListModel::onTimeout()
+{
+    setRun(false);
+    emit connectionLost();
 }
 
 void FileListModel::update(FileInfo *const fileinfo, const QVector<int> &roles)
@@ -156,12 +175,35 @@ void FileListModel::setRun(bool value)
 {
     if (value)
     {
+        pendingList.start();
+        downloadList.start();
         timer.start(1000);
     }
     else
     {
+        pendingList.stop();
+        downloadList.stop();
         timer.stop();
     }
+}
+
+void FileListModel::onDownloadProgress(const QString &name, int percent,
+                                       double rate)
+{
+    emit downloadProgress(name, percent, rate);
+}
+
+void FileListModel::onFileDownloaded(FileInfo * /*fileinfo*/)
+{
+    int numDownloaded = 0;
+    Q_FOREACH (auto file, fileList)
+    {
+        if (file->isDownloaded())
+        {
+            ++numDownloaded;
+        }
+    }
+    emit globalDownloadProgress(numDownloaded, fileList.size());
 }
 
 QString FileListModel::getSavePrefix() const

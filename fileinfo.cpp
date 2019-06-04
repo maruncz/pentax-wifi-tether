@@ -1,24 +1,31 @@
-#include "fileinfo.h"
+﻿#include "fileinfo.h"
 #include <QDir>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QJsonValue>
-#include <utility>
+#include <QNetworkReply>
+#include <cmath>
 
 FileInfo::FileInfo(QUrl url, QObject *parent)
     : QObject(parent), fileUrl(std::move(url))
 {
     connect(&networkManager, &QNetworkAccessManager::finished, this,
-            &FileInfo::on_networkManager_finished);
+            &FileInfo::onNetworkManagerFinished);
+    timeout.setSingleShot(true);
+    timeout.setInterval(5000);
+    connect(&timeout, &QTimer::timeout, this, &FileInfo::onTimeout);
+    rateTimer.setSingleShot(false);
+    rateTimer.setInterval(1000);
+    connect(&rateTimer, &QTimer::timeout, this, &FileInfo::onRateTimerTimeout);
 }
 
-void FileInfo::on_networkManager_finished(QNetworkReply *reply)
+void FileInfo::onNetworkManagerFinished(QNetworkReply *reply)
 {
     if (reply == infoReply)
     {
         if (reply->error() == QNetworkReply::NoError)
         {
-            QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
+            auto data         = reply->readAll();
+            QJsonDocument doc = QJsonDocument::fromJson(data);
             QJsonObject obj   = doc.object();
             QString datetime = obj.value(QStringLiteral("datetime")).toString();
             if (!datetime.isEmpty())
@@ -30,38 +37,88 @@ void FileInfo::on_networkManager_finished(QNetworkReply *reply)
             }
             else
             {
-                qDebug() << reply->readAll();
+                qDebug() << "error fetching date: " << fileUrl << ": " << data;
+                emit dateFetchError(this);
             }
+            infoReply->deleteLater();
+            infoReply = nullptr;
         }
         else
         {
             qDebug() << "date reply error: " << reply->error();
             emit dateFetchError(this);
         }
+        timeout.stop();
     }
     else if (reply == downloadReply)
     {
-        if (reply->error() != QNetworkReply::NoError)
+        if (reply->error() == QNetworkReply::NoError)
         {
+            QFile file(savePrefix + '/' + filePath);
+            auto data = downloadReply->readAll();
+            downloadReply->deleteLater();
+            downloadReply = nullptr;
+            if (!file.open(QFile::WriteOnly))
+            {
+                qDebug() << "cannot open file " << filePath << ": "
+                         << file.errorString();
+                emit downloadError(this);
+            }
+            else
+            {
+                downloaded = true;
+                file.write(data);
+                file.close();
+                emit fileDownloaded(this);
+            }
+        }
+        else
+        {
+            downloadReply->deleteLater();
+            downloadReply = nullptr;
             qDebug() << "download error: " << reply->errorString();
             emit downloadError(this);
         }
+        timeout.stop();
+        rateTimer.stop();
     }
 }
 
-void FileInfo::on_download_ready_read()
+void FileInfo::onTimeout()
 {
-    file->write(downloadReply->readAll());
+    if (infoReply)
+    {
+        if (infoReply->isRunning())
+        {
+            infoReply->abort();
+        }
+    }
+    else if (downloadReply)
+    {
+        if (downloadReply->isRunning())
+        {
+            downloadReply->abort();
+        }
+    }
+    bytesWritten         = 0;
+    bytesWrittenPrevious = 0;
 }
 
-void FileInfo::on_download_finished()
+void FileInfo::onDownloadProgress(qint64 bytesReceived, qint64 bytesTotal)
 {
-    downloaded = true;
-    file->close();
-    delete file;
-    file          = nullptr;
-    downloadReply = nullptr;
-    emit fileDownloaded(this);
+    timeout.start();
+    double pecrd =
+        static_cast<double>(bytesReceived) / static_cast<double>(bytesTotal);
+    int percent  = static_cast<int>(std::round(100 * pecrd));
+    bytesWritten = bytesReceived;
+    emit downloadProgress(getFileName(), percent, downloadRate);
+}
+
+void FileInfo::onRateTimerTimeout()
+{
+    downloadRate =
+        static_cast<double>(bytesWritten - bytesWrittenPrevious) / 1000.0;
+    bytesWrittenPrevious = bytesWritten;
 }
 
 QString FileInfo::getFilePath() const
@@ -81,8 +138,18 @@ QString FileInfo::getFileName() const
 
 void FileInfo::getDate()
 {
+    // if file is video (*.MOV)
+    auto ext = fileUrl.toString().split('.').back();
+    if (ext == QLatin1String("MOV"))
+    {
+        filePath = "videos/" + fileUrl.toString().split('/').back();
+        emit readyForDownload(this);
+        return;
+    }
+
     infoReply =
         networkManager.get(QNetworkRequest(QUrl(fileUrl.toString() + "/info")));
+    timeout.start();
 }
 
 void FileInfo::download(const QString &savePrefix)
@@ -101,19 +168,14 @@ void FileInfo::download(const QString &savePrefix)
         }
     }
 
-    file = new QFile(savePrefix + '/' + getFilePath());
-    if (!file->open(QIODevice::WriteOnly))
-    {
-        qDebug() << "cannot open file " << file->fileName() << ": "
-                 << file->errorString();
-        return;
-    }
-    downloadReply = networkManager.get(QNetworkRequest(getFileUrl()));
+    this->savePrefix = savePrefix;
 
-    connect(downloadReply, &QNetworkReply::finished, this,
-            &FileInfo::on_download_finished);
-    connect(downloadReply, &QNetworkReply::readyRead, this,
-            &FileInfo::on_download_ready_read);
+    downloadReply = networkManager.get(QNetworkRequest(getFileUrl()));
+    connect(downloadReply, &QNetworkReply::downloadProgress, this,
+            &FileInfo::onDownloadProgress);
+
+    timeout.start();
+    rateTimer.start();
 }
 
 bool FileInfo::operator==(const FileInfo &rhs) const
@@ -152,6 +214,16 @@ bool FileInfo::alreadyDownloaded(const QString &savePrefix)
         }
     }
     return false;
+}
+
+bool FileInfo::isDownloaded() const
+{
+    return downloaded;
+}
+
+void FileInfo::abort()
+{
+    onTimeout();
 }
 
 QUrl FileInfo::getFileUrl() const

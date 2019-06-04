@@ -1,18 +1,15 @@
 #ifndef FILEINFO_H
 #define FILEINFO_H
 
-#include <QFile>
 #include <QNetworkAccessManager>
-#include <QNetworkReply>
-#include <QObject>
-#include <QUrl>
+#include <QTimer>
+
+class QNetworkReply;
+class QObject;
 
 class FileInfo : public QObject
 {
     Q_OBJECT
-
-    friend class FileListModel;
-
 public:
     explicit FileInfo(QUrl url, QObject *parent = nullptr);
 
@@ -25,10 +22,13 @@ public:
 
     void getDate();
     void download(const QString &savePrefix);
-    bool alreadyDownloaded(const QString &savePrefix);
 
     bool operator==(const FileInfo &rhs) const;
     bool operator<(const FileInfo &rhs) const;
+
+    bool isDownloaded() const;
+
+    void abort();
 
 signals:
 
@@ -36,22 +36,34 @@ signals:
     void fileDownloaded(FileInfo *fileinfo);
     void dateFetchError(FileInfo *fileinfo);
     void downloadError(FileInfo *fileinfo);
+    void downloadProgress(const QString &name, int percent, double rate);
 
 public slots:
 
 private slots:
 
-    void on_networkManager_finished(QNetworkReply *reply);
-    void on_download_ready_read();
-    void on_download_finished();
+    void onNetworkManagerFinished(QNetworkReply *reply);
+
+    void onTimeout();
+    void onDownloadProgress(qint64 bytesReceived, qint64 bytesTotal);
+
+    void onRateTimerTimeout();
 
 private:
+    bool alreadyDownloaded(const QString &savePrefix);
+
     QUrl fileUrl;
     QString filePath;
     QNetworkReply *infoReply{nullptr};
     QNetworkReply *downloadReply{nullptr};
     QNetworkAccessManager networkManager{this};
-    QFile *file{nullptr};
+    QTimer timeout;
+    QTimer rateTimer;
+    qint64 bytesWrittenPrevious{0};
+    qint64 bytesWritten{0};
+    double downloadRate{0.0};
+    QString savePrefix;
+
     bool downloaded{false};
 };
 

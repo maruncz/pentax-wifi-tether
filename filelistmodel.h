@@ -3,13 +3,12 @@
 
 #include "datequeue.h"
 #include "downloadqueue.h"
-#include "fileinfo.h"
 #include <QAbstractTableModel>
-#include <QFile>
 #include <QNetworkAccessManager>
-#include <QNetworkReply>
-#include <QObject>
-#include <QTimer>
+
+class FileInfo;
+class QNetworkReply;
+class QObject;
 
 class FileListModel : public QAbstractTableModel
 {
@@ -35,11 +34,21 @@ public:
 
 signals:
 
+    void downloadProgress(const QString &name, int percent, double rate);
+    void globalDownloadProgress(int downloadedFiles, int totalFiles);
+    void connectionLost();
+
+private slots:
+
+    void onDownloadProgress(const QString &name, int percent, double rate);
+    void onFileDownloaded(FileInfo *fileinfo);
+    void onNetworkManagerFinished(QNetworkReply *reply);
+    void onTimerTimeout();
+    void onTimeout();
+
 private:
-    void on_networkManager_finished(QNetworkReply *reply);
-    void on_timer_timeout();
     void update(FileInfo *fileinfo, const QVector<int> &roles = QVector<int>());
-    void setDownloaded(FileInfo *info, bool value);
+    void setDownloaded(FileInfo *info);
 
     QNetworkAccessManager networkManager{this};
     QNetworkReply *listReply{nullptr};
@@ -50,6 +59,7 @@ private:
     DownloadQueue downloadList;
     QList<FileInfo *> fileList;
     QTimer timer{this};
+    QTimer timeout{this};
 };
 
 #endif // FILELISTMODEL_H
