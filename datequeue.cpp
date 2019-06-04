@@ -45,12 +45,16 @@ void DateQueue::stop()
 
 void DateQueue::fetch()
 {
-    QMutexLocker locker(&enqMutex);
-    if (fetching || queue.isEmpty())
+    if (fetching)
     {
         return;
     }
     fetching = 1;
+    if (queue.isEmpty())
+    {
+        fetching = 0;
+        return;
+    }
     queue.head()->getDate();
 }
 

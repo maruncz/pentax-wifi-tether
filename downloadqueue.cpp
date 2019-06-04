@@ -20,11 +20,16 @@ void DownloadQueue::enqueue(FileInfo *fileinfo)
 
 void DownloadQueue::fetch()
 {
-    if (fetching || queue.isEmpty())
+    if (fetching)
     {
         return;
     }
     fetching = 1;
+    if (queue.isEmpty())
+    {
+        fetching = 0;
+        return;
+    }
     if (queue.head()->isDownloaded())
     {
         onDownloaded(queue.head());
